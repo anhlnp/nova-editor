@@ -51,6 +51,7 @@ export const viDictionary: I18nDictionary = {
     passwordsNoMatch: "Mật khẩu không khớp.",
     passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự.",
     registrationFailed: "Đăng ký thất bại. Vui lòng thử lại.",
+    registrationSuccess: "Đăng ký thành công! Vui lòng đăng nhập với tài khoản mới tạo.",
     verifyingEmail: "Đang xác minh email của bạn…",
     emailVerifiedTitle: "Đã xác minh email",
     emailVerifiedBody: "Địa chỉ email của bạn đã được xác nhận. Cảm ơn bạn đã bảo mật tài khoản!",

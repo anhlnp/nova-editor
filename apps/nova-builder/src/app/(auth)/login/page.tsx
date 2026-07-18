@@ -13,6 +13,7 @@ function AuthForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/projects";
   const authError = searchParams.get("error");
+  const registered = searchParams.get("registered") === "true";
   const backHref = callbackUrl.startsWith("/builder/") ? callbackUrl : "/";
 
   const [email, setEmail] = useState("");
@@ -68,6 +69,12 @@ function AuthForm() {
         <div style={{ width: "100%", maxWidth: 420, background: "#ffffff", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: "40px 36px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
           <h1 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800, color: "#0f172a", textAlign: "center" }}>{t.auth.signInTitle}</h1>
           <p style={{ margin: "0 0 28px", fontSize: 15, color: "#64748b", textAlign: "center" }}>{t.auth.allMethodsGiveSameAccount}</p>
+
+          {registered && (
+            <div style={{ margin: "0 0 20px", padding: "10px 12px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, color: "#16a34a", fontSize: 14, fontWeight: 500, textAlign: "center", lineHeight: "1.4" }}>
+              {t.auth.registrationSuccess}
+            </div>
+          )}
 
           {/* OAuth buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
