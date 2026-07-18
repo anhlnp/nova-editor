@@ -34,14 +34,18 @@ export async function POST(req: Request) {
   const isMock = !clientId || clientId.includes("your_") || !apiKey || !checksumKey;
   const orderCode = Number(`${Date.now()}`.slice(-10));
 
+  const customAccountNumber = process.env.PAYOS_CUSTOM_ACCOUNT_NUMBER;
+  const customAccountName = process.env.PAYOS_CUSTOM_ACCOUNT_NAME;
+  const customBin = process.env.PAYOS_CUSTOM_BIN;
+
   if (isMock) {
     return NextResponse.json({
       qrCode: "mock-vietqr-data",
       amount,
       orderCode,
-      accountNumber: "1234567890",
-      accountName: "NOVA EDITOR MOCK TEST",
-      bin: "970415",
+      accountNumber: customAccountNumber || "1234567890",
+      accountName: customAccountName || "NOVA EDITOR MOCK TEST",
+      bin: customBin || "970415",
       description: `nova ${plan} test`.slice(0, 25),
       isMock: true,
     });
@@ -107,9 +111,9 @@ export async function POST(req: Request) {
     qrCode: json.data.qrCode,
     amount: json.data.amount,
     orderCode: json.data.orderCode,
-    accountNumber: json.data.accountNumber,
-    accountName: json.data.accountName,
-    bin: json.data.bin,
+    accountNumber: customAccountNumber || json.data.accountNumber,
+    accountName: customAccountName || json.data.accountName,
+    bin: customBin || json.data.bin,
     description: json.data.description,
   });
 }
