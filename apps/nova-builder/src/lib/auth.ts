@@ -35,22 +35,40 @@ function buildProviders() {
                 client_id: provider.clientId as string,
                 client_secret: provider.clientSecret as string,
                 code: params.code as string,
-                redirect_uri: `${getAppUrl()}/api/auth/callback/github`,
+                redirect_uri: provider.callbackUrl,
               }),
             });
             const tokens = await response.json();
+            if (tokens.error) {
+              throw new Error(`GitHub token exchange failed: ${tokens.error_description || tokens.error}`);
+            }
+            if (!tokens.access_token) {
+              throw new Error("GitHub token exchange did not return an access token");
+            }
             return { tokens };
           },
         },
         userinfo: {
           url: "https://api.github.com/user",
           async request({ tokens }) {
-            const profile = await fetch("https://api.github.com/user", {
+            if (!tokens.access_token) {
+              throw new Error("No access token available for GitHub userinfo request");
+            }
+            const profileRes = await fetch("https://api.github.com/user", {
               headers: {
                 Authorization: `Bearer ${tokens.access_token}`,
                 "User-Agent": "nova-editor",
               },
-            }).then((res) => res.json());
+            });
+
+            if (!profileRes.ok) {
+              const errBody = await profileRes.json().catch(() => ({}));
+              throw new Error(
+                `GitHub userinfo fetch failed (status ${profileRes.status}): ${errBody.message || profileRes.statusText || JSON.stringify(errBody)
+                }`
+              );
+            }
+            const profile = await profileRes.json();
 
             if (!profile.email) {
               const res = await fetch("https://api.github.com/user/emails", {
@@ -212,6 +230,22 @@ export const authOptions: NextAuthOptions = {
             undefined;
         }
       }
+      // Self-healing: if token.id is not a UUID but we have an email, look up the database UUID
+      const isUuid = (id?: string) => id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (token.email && !isUuid(token.id as string)) {
+        try {
+          const { getSupabaseAdmin } = await import("@/lib/supabaseAdmin");
+          const db = getSupabaseAdmin();
+          const { data } = await db.from("users").select("id").eq("email", token.email).maybeSingle();
+          if (data?.id) {
+            token.id = data.id;
+            token.sub = data.id;
+          }
+        } catch (e) {
+          console.error("[auth] Failed to heal non-UUID session", e);
+        }
+      }
+
       return token;
     },
 
@@ -224,6 +258,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-
   secret: process.env.NEXTAUTH_SECRET!,
 };

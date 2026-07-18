@@ -86,9 +86,9 @@ export async function POST(req: Request) {
     const { data: user } = await supabase.from("users").select("credits_remaining").eq("id", userId).single();
     await supabase.from("users").update({ credits_remaining: (user?.credits_remaining ?? 0) + CREDIT_PACK }).eq("id", userId);
   } else if (teamId) {
-    await supabase.from("teams").update({ plan: plan === "team" ? "team" : "pro" }).eq("id", teamId);
+    await supabase.from("teams").update({ plan: plan === "team" ? "team" : plan === "max" ? "max" : "pro" }).eq("id", teamId);
   } else if (userId) {
-    await supabase.from("users").update({ tier: plan === "team" ? "team" : "pro" }).eq("id", userId);
+    await supabase.from("users").update({ tier: plan === "team" ? "team" : plan === "max" ? "max" : "pro" }).eq("id", userId);
   }
 
   return NextResponse.json({ ok: true });

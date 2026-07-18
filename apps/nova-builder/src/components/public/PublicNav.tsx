@@ -29,9 +29,11 @@ export function PublicNav() {
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <LanguageSwitcher />
-        <Link href="/pricing" style={{ padding: "0 16px", height: 44, display: "flex", alignItems: "center", fontSize: 15, color: "#475569", fontWeight: 500, textDecoration: "none", borderRadius: 8, transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#6d28d9"} onMouseLeave={(e) => e.currentTarget.style.color = "#475569"}>
-          {t.nav.pricing}
-        </Link>
+        {!isLoggedIn && (
+          <Link href="/pricing" style={{ padding: "0 16px", height: 44, display: "flex", alignItems: "center", fontSize: 15, color: "#475569", fontWeight: 500, textDecoration: "none", borderRadius: 8, transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#6d28d9"} onMouseLeave={(e) => e.currentTarget.style.color = "#475569"}>
+            {t.nav.pricing}
+          </Link>
+        )}
         <Link href="/builder/demo" style={{ padding: "0 16px", height: 44, display: "flex", alignItems: "center", fontSize: 15, color: "#475569", fontWeight: 500, textDecoration: "none", borderRadius: 8, transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#6d28d9"} onMouseLeave={(e) => e.currentTarget.style.color = "#475569"}>
           {t.landing.tryDemo}
         </Link>

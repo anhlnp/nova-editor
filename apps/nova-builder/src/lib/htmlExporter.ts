@@ -29,6 +29,56 @@ const TAG: Record<string, string> = {
   Form: "form", WebhookForm: "form", Input: "input", Textarea: "textarea",
   Select: "select", Label: "label", Checkbox: "input",
   List: "ul", ListItem: "li", Separator: "hr",
+  // HeroUI replicas → semantic HTML tags
+  "heroui:HeroUIButton": "button", "heroui:HeroUIInput": "div",
+  "heroui:HeroUICard": "div", "heroui:HeroUISwitch": "div",
+  "heroui:HeroUIChip": "span", "heroui:HeroUIDivider": "hr",
+  "heroui:HeroUISpinner": "div", "heroui:HeroUICode": "code",
+  "heroui:HeroUIProgress": "div", "heroui:HeroUIUser": "div",
+  "heroui:HeroUIRow": "div", "heroui:HeroUICol": "div",
+  "heroui:HeroUIContainer": "div", "heroui:HeroUISection": "section",
+  "heroui:HeroUIFlexRow": "div", "heroui:HeroUISpacer": "div",
+  "heroui:HeroUIImage": "img", "heroui:HeroUIText": "p",
+  "heroui:HeroUIHeading": "h2", "heroui:HeroUILink": "a",
+};
+
+// Inline styles for HeroUI components in exported HTML.
+const HEROUI_EXPORT_STYLES: Record<string, (props: Record<string, unknown>) => string> = {
+  "heroui:HeroUIButton": (p) => {
+    const colors: Record<string, string> = { default: "#3f3f46", primary: "#006FEE", secondary: "#9353d3", success: "#17c964", warning: "#f5a524", danger: "#f31260" };
+    const bg = colors[String(p.color ?? "primary")] ?? "#006FEE";
+    return `display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14px;padding:0 16px;height:40px;border-radius:12px;border:none;background:${bg};color:#fff;cursor:pointer;font-family:system-ui,sans-serif;`;
+  },
+  "heroui:HeroUICard": () => "background:#18181b;border:1px solid #27272a;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.3);padding:16px;color:#fafafa;font-family:system-ui,sans-serif;",
+  "heroui:HeroUIRow": (p) => `display:grid;grid-template-columns:repeat(12,1fr);gap:${p.gap ?? "16px"};width:100%;box-sizing:border-box;`,
+  "heroui:HeroUICol": (p) => { const s = Math.max(1, Math.min(12, Number(p.span) || 6)); return `grid-column:span ${s}/span ${s};min-width:0;`; },
+  "heroui:HeroUIChip": () => "display:inline-flex;align-items:center;font-size:12px;padding:4px 10px;border-radius:9999px;background:#3f3f46;color:#fafafa;font-family:system-ui,sans-serif;",
+  "heroui:HeroUIProgress": (p) => { const v = Math.max(0, Math.min(100, Number(p.value) || 50)); return `width:100%;height:6px;background:#27272a;border-radius:9999px;overflow:hidden;--progress-w:${v}%;`; },
+  "heroui:HeroUIInput": () => "display:flex;flex-direction:column;gap:4px;font-family:system-ui,sans-serif;width:100%;",
+  "heroui:HeroUISpinner": () => "display:inline-flex;flex-direction:column;align-items:center;gap:8px;",
+  "heroui:HeroUICode": () => "font-family:ui-monospace,'Fira Code',monospace;font-size:14px;padding:2px 8px;border-radius:6px;background:rgba(63,63,70,0.25);color:#d4d4d8;",
+  "heroui:HeroUIUser": () => "display:inline-flex;align-items:center;gap:12px;font-family:system-ui,sans-serif;color:#fafafa;",
+  "heroui:HeroUIDivider": () => "border:none;background:#27272a;height:1px;width:100%;margin:8px 0;",
+  "heroui:HeroUISwitch": () => "display:inline-flex;align-items:center;gap:8px;font-family:system-ui,sans-serif;color:#fafafa;",
+  "heroui:HeroUIContainer": (p) => {
+    const justifyMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around", evenly: "space-evenly" };
+    const alignMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch", baseline: "baseline" };
+    return `display:flex;flex-direction:${p.direction ?? "column"};justify-content:${justifyMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${alignMap[String(p.align ?? "stretch")] ?? "stretch"};gap:${p.gap ?? "0px"};padding:${p.padding ?? "16px"};flex-wrap:${p.wrap ?? "nowrap"};box-sizing:border-box;min-height:40px;width:100%;`;
+  },
+  "heroui:HeroUISection": (p) => `display:flex;flex-direction:column;width:100%;max-width:${p.maxWidth ?? "1200px"};margin:0 auto;padding:${p.padding ?? "48px 24px"};background:${p.background ?? "transparent"};box-sizing:border-box;min-height:80px;`,
+  "heroui:HeroUIFlexRow": (p) => {
+    const justifyMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around" };
+    const alignMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
+    return `display:flex;flex-direction:row;gap:${p.gap ?? "12px"};justify-content:${justifyMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${alignMap[String(p.align ?? "center")] ?? "center"};flex-wrap:${p.wrap ?? "wrap"};width:100%;box-sizing:border-box;min-height:32px;`;
+  },
+  "heroui:HeroUISpacer": (p) => `height:${p.height ?? "24px"};width:100%;flex-shrink:0;`,
+  "heroui:HeroUIImage": (p) => `width:${p.width ?? "100%"};height:${p.height ?? "auto"};object-fit:${p.objectFit ?? "cover"};border-radius:${p.borderRadius ?? "8px"};display:block;max-width:100%;`,
+  "heroui:HeroUIText": (p) => `font-size:${p.fontSize ?? "16px"};font-weight:${p.fontWeight ?? "400"};color:${p.color ?? "inherit"};text-align:${p.textAlign ?? "left"};line-height:1.6;margin:0;`,
+  "heroui:HeroUIHeading": (p) => {
+    const sizes: Record<number, string> = { 1: "2.5rem", 2: "2rem", 3: "1.5rem", 4: "1.25rem", 5: "1rem", 6: "0.875rem" };
+    return `font-size:${sizes[Number(p.level ?? 2)] ?? "2rem"};font-weight:bold;text-align:${p.textAlign ?? "left"};color:${p.color ?? "inherit"};margin:0;line-height:1.3;`;
+  },
+  "heroui:HeroUILink": (p) => `color:${p.color ?? "#006FEE"};text-decoration:underline;cursor:pointer;`,
 };
 
 const VOID_TAGS = new Set(["img", "input", "hr", "br"]);
@@ -43,10 +93,10 @@ export interface ExportInteraction {
   id: string;
   trigger: "click" | "mouseover" | "focus" | "scroll" | "load";
   action:
-    | { type: "navigate"; url: string; newTab?: boolean }
-    | { type: "toggleClass"; className: string }
-    | { type: "showHide"; targetInstanceId?: string }
-    | { type: "animate"; keyframe: string; duration: number; easing: string; fill: string };
+  | { type: "navigate"; url: string; newTab?: boolean }
+  | { type: "toggleClass"; className: string }
+  | { type: "showHide"; targetInstanceId?: string }
+  | { type: "animate"; keyframe: string; duration: number; easing: string; fill: string };
 }
 
 export interface ExportCookieConsent {
@@ -87,8 +137,12 @@ function renderInstance(
 ): string {
   const inst = data.instances.get(iId);
   if (!inst) return "";
-  const tag = TAG[inst.component] ?? "div";
   const ip = propMap.get(iId) ?? {};
+  let tag = TAG[inst.component] ?? "div";
+  if (inst.component === "heroui:HeroUIHeading") {
+    const level = ip["level"] ?? 2;
+    tag = `h${level}`;
+  }
   const pad = "  ".repeat(indent);
   const attrs: string[] = [
     `${idAttribute}="${iId}"`,
@@ -123,6 +177,11 @@ function renderInstance(
   // Inline style prop (e.g. from Tailwind paste M7) travels through.
   if (typeof ip["style"] === "string" && ip["style"]) {
     attrs.push(`style="${esc(ip["style"] as string)}"`);
+  }
+  // HeroUI component inline styles for export
+  const heroStyleFn = HEROUI_EXPORT_STYLES[inst.component];
+  if (heroStyleFn && !ip["style"]) {
+    attrs.push(`style="${esc(heroStyleFn(ip))}"`);
   }
 
   const children = inst.children
@@ -191,12 +250,11 @@ function buildScripts(opts: ExportOptions): string {
 
   const cc = opts.cookieConsent;
   const cookieBanner = cc?.enabled
-    ? `<div id="nova-cookie-banner" style="display:none;position:fixed;z-index:9999;${
-        cc.position === "top" ? "top:0;left:0;right:0;" :
-        cc.position === "bottom-left" ? "bottom:16px;left:16px;max-width:380px;border-radius:10px;" :
+    ? `<div id="nova-cookie-banner" style="display:none;position:fixed;z-index:9999;${cc.position === "top" ? "top:0;left:0;right:0;" :
+      cc.position === "bottom-left" ? "bottom:16px;left:16px;max-width:380px;border-radius:10px;" :
         cc.position === "bottom-right" ? "bottom:16px;right:16px;max-width:380px;border-radius:10px;" :
-        "bottom:0;left:0;right:0;"
-      }background:${cc.bgColor};padding:14px 18px;font-family:system-ui,sans-serif;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 -2px 16px rgba(0,0,0,0.2)">
+          "bottom:0;left:0;right:0;"
+    }background:${cc.bgColor};padding:14px 18px;font-family:system-ui,sans-serif;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 -2px 16px rgba(0,0,0,0.2)">
   <span style="font-size:13px;color:${cc.textColor};flex:1;min-width:200px;line-height:1.5">${esc(cc.message)}</span>
   <span style="display:flex;gap:8px;flex-shrink:0">
     <button id="nova-cookie-accept" style="padding:7px 16px;border-radius:6px;border:none;background:${cc.buttonColor};color:#fff;font-size:12px;font-weight:600;cursor:pointer">${esc(cc.acceptLabel)}</button>
@@ -231,14 +289,14 @@ export function exportPageToHtml(data: WebstudioData, page: Page, opts: ExportOp
   const rootInst = data.instances.get(page.rootInstanceId);
   const bodyHtml = rootInst
     ? rootInst.children
-        .map((c) =>
-          c.type === "id"
-            ? renderInstance(data, propMap, c.value, 2)
-            : c.type === "text"
-              ? `    ${esc(c.value)}\n`
-              : ""
-        )
-        .join("")
+      .map((c) =>
+        c.type === "id"
+          ? renderInstance(data, propMap, c.value, 2)
+          : c.type === "text"
+            ? `    ${esc(c.value)}\n`
+            : ""
+      )
+      .join("")
     : "";
 
   const poweredBy = opts.hidePoweredBy ? "" : `<!-- Built with ${opts.brandingName || "Nova"} -->`;
@@ -254,6 +312,7 @@ export function exportPageToHtml(data: WebstudioData, page: Page, opts: ExportOp
     '  <meta charset="UTF-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
     `  <title>${esc(title)}</title>`,
+    '  <script src="https://cdn.tailwindcss.com"></script>',
     "  <style>",
     "    *, *::before, *::after { box-sizing: border-box; }",
     "    body { margin: 0; }",

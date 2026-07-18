@@ -5,6 +5,7 @@ import { UI_VARS as C, FONT } from "@/lib/uiTheme";
 import { PLAN_CARDS } from "@/lib/plans";
 import { TIER_ENTITLEMENTS } from "@/lib/tiers";
 import type { Tier } from "@/lib/tiers";
+import PayOSCheckoutModal from "@/components/PayOSCheckoutModal";
 
 type UserInfo = {
   tier: Tier;
@@ -12,72 +13,106 @@ type UserInfo = {
   createdAt: string;
 };
 
-function PlanCard({ plan, current, onUpgrade, onPayVietQR }: {
+function PlanCard({ plan, current, onPayVietQR }: {
   plan: typeof PLAN_CARDS[0];
   current: boolean;
-  onUpgrade: () => void;
   onPayVietQR: () => void;
 }) {
   return (
     <div style={{
-      background: C.card, border: `1px solid ${current ? "rgba(124,58,237,0.5)" : C.border}`,
-      borderRadius: 12, padding: "20px 20px 16px",
-      boxShadow: current ? "0 0 0 1px rgba(124,58,237,0.2)" : "none",
-      display: "flex", flexDirection: "column", gap: 12,
+      background: C.card,
+      border: `1.5px solid ${current ? (C.accent || "#7c3aed") : (C.border || "rgba(255,255,255,0.08)")}`,
+      borderRadius: 12, padding: "24px 20px 20px",
+      boxShadow: current ? `0 0 12px ${C.accent || "#7c3aed"}44` : "none",
+      display: "flex", flexDirection: "column", gap: 14,
+      position: "relative",
     }}>
+      {plan.tier === "pro" && (
+        <div style={{
+          position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)",
+          background: C.accent || "#7c3aed", color: "#fff", fontSize: 10, fontWeight: 700,
+          padding: "2px 10px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.05em"
+        }}>
+          Phổ biến nhất
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontSize: FONT.md, fontWeight: 700, color: C.text }}>{plan.label}</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: current ? C.accentText : C.text, marginTop: 4 }}>{plan.price}</div>
+          <div style={{ fontSize: FONT.md, fontWeight: 700, color: C.text }}>{plan.tier === "free" ? "Miễn phí" : plan.tier === "pro" ? "Pro" : plan.tier === "max" ? "Max" : "Team"}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: current ? (C.accentText || "#a78bfa") : C.text, marginTop: 4 }}>{plan.price}</div>
         </div>
         {current && (
-          <div style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.4)", borderRadius: 20, padding: "2px 10px", fontSize: FONT.xs, color: C.accentText, fontWeight: 700 }}>
-            Current plan
+          <div style={{
+            background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)",
+            borderRadius: 20, padding: "2px 10px", fontSize: FONT.xs, color: C.accentText || "#a78bfa", fontWeight: 700
+          }}>
+            Gói hiện tại
           </div>
         )}
       </div>
 
-      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
         {plan.features.map((f) => (
-          <li key={f} style={{ fontSize: FONT.sm, color: C.textDim, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ color: C.success, fontSize: FONT.md }}>✓</span> {f}
+          <li key={f} style={{ fontSize: FONT.sm, color: C.textDim, display: "flex", alignItems: "flex-start", gap: 6 }}>
+            <span style={{ color: C.success || "#10b981", fontSize: FONT.md, flexShrink: 0 }}>✓</span>
+            <span>{f}</span>
           </li>
         ))}
       </ul>
 
-      {!current && plan.tier !== "free" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
-          <button
-            onClick={onUpgrade}
-            style={{
-              padding: "7px 0", borderRadius: 6, border: "none",
-              background: "rgba(124,58,237,0.8)", color: "#fff",
-              fontSize: FONT.sm, fontFamily: C.font, cursor: "pointer", fontWeight: 600,
-            }}
-          >
-            {plan.cta} →
-          </button>
-          <button
-            onClick={onPayVietQR}
-            title="One-time annual payment via Vietnamese bank QR"
-            style={{
-              padding: "6px 0", borderRadius: 6,
-              border: "1px solid rgba(124,58,237,0.35)", background: "transparent",
-              color: C.accentText, fontSize: FONT.xs, fontFamily: C.font, cursor: "pointer", fontWeight: 600,
-            }}
-          >
-            Pay with VietQR (PayOS)
-          </button>
+      {current ? (
+        <div style={{
+          height: 38, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: FONT.sm, fontWeight: 700,
+          background: "rgba(124,58,237,0.08)",
+          color: C.accentText || "#a78bfa",
+          border: "1px solid rgba(124,58,237,0.2)",
+          marginTop: "auto",
+        }}>
+          Gói hiện tại
         </div>
+      ) : plan.tier === "free" ? (
+        <div style={{
+          height: 38, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: FONT.sm, fontWeight: 600,
+          background: "rgba(255,255,255,0.02)",
+          color: C.textMuted,
+          border: `1px solid ${C.border || "rgba(255,255,255,0.08)"}`,
+          marginTop: "auto",
+        }}>
+          Có sẵn
+        </div>
+      ) : (
+        <button
+          onClick={onPayVietQR}
+          style={{
+            height: 38, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: FONT.sm, fontWeight: 700,
+            background: plan.tier === "pro" ? (C.accent || "#7c3aed") : "transparent",
+            color: plan.tier === "pro" ? "#ffffff" : (C.accentText || "#a78bfa"),
+            border: `1.5px solid ${C.accent || "#7c3aed"}`,
+            marginTop: "auto",
+            cursor: "pointer",
+            width: "100%",
+            fontFamily: "inherit",
+          }}
+        >
+          {plan.tier === "team" ? "Nâng cấp lên Team" : plan.tier === "max" ? "Nâng cấp lên Max" : "Nâng cấp lên Pro"}
+        </button>
       )}
     </div>
   );
 }
 
+
+
 export default function SubscriptionPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedTier, setSelectedTier] = useState<string>("pro");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/account")
@@ -91,7 +126,8 @@ export default function SubscriptionPage() {
     window.location.href = `/api/billing/portal?provider=lemonsqueezy&plan=${tier}`;
   };
   const handleVietQR = (tier: string) => {
-    window.location.href = `/api/billing/portal?provider=payos&plan=${tier}`;
+    setSelectedTier(tier);
+    setIsModalOpen(true);
   };
 
   const currentTier = user?.tier ?? "free";
@@ -121,7 +157,7 @@ export default function SubscriptionPage() {
                   AI CREDITS REMAINING
                 </div>
                 <button
-                  onClick={() => { window.location.href = "/api/billing/portal?provider=payos&plan=credits"; }}
+                  onClick={() => handleVietQR("credits")}
                   title="Buy a credit top-up pack (VietQR)"
                   style={{ padding: "3px 10px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: FONT.xs, fontFamily: C.font, cursor: "pointer", fontWeight: 600 }}
                 >
@@ -142,14 +178,12 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            {/* Plan cards — 3 displayed (free/pro/max); team on request */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-              {PLAN_CARDS.filter((p) => p.tier !== "team").map((plan) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+              {PLAN_CARDS.map((plan) => (
                 <PlanCard
                   key={plan.tier}
                   plan={plan}
                   current={plan.tier === currentTier}
-                  onUpgrade={() => handleUpgrade(plan.tier)}
                   onPayVietQR={() => handleVietQR(plan.tier)}
                 />
               ))}
@@ -162,6 +196,12 @@ export default function SubscriptionPage() {
           </>
         )}
       </div>
+
+      <PayOSCheckoutModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        tier={selectedTier}
+      />
     </div>
   );
 }
