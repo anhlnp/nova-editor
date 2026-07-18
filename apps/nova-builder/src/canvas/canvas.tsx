@@ -44,6 +44,7 @@ import { useCanvasStore } from "@/lib/sync-stores";
 import { createInstanceElement } from "./elements";
 import { RepeatList, repeatListMeta } from "./repeat-list";
 import { Slot, slotMeta } from "./slot";
+import { heroUIComponents, heroUIMetas } from "./heroui-components";
 import { SelectionOverlay } from "./SelectionOverlay";
 import { TextEditOverlay } from "./TextEditOverlay";
 import { initDragReparent } from "./dragReparent";
@@ -174,6 +175,12 @@ export const Canvas = () => {
       namespace: "nova",
       components: { RepeatList, Slot } as Record<string, unknown>,
       metas: { RepeatList: repeatListMeta, Slot: slotMeta },
+    });
+    // HeroUI visual components — replica components styled like HeroUI
+    registerComponentLibrary({
+      namespace: "heroui",
+      components: heroUIComponents,
+      metas: heroUIMetas as Record<string, import("@webstudio-is/sdk").WsComponentMeta>,
     });
     setLibrariesRegistered(true);
   }, [librariesRegistered]);
@@ -308,7 +315,7 @@ export const Canvas = () => {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  // ── Grid guides (M10) — toggle visual grid overlay via postMessage ───────────
+  // ── Grid guides (M10) — toggle visual 12-column grid overlay via postMessage ─
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.data?.type !== "nova:gridGuides") return;
@@ -321,24 +328,160 @@ export const Canvas = () => {
           document.head.appendChild(el);
         }
         el.textContent = `
+          body {
+            position: relative;
+          }
           body::before {
             content: "";
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 9998;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+            padding: 0 16px;
+            box-sizing: border-box;
+          }
+          body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+            padding: 0 16px;
+            box-sizing: border-box;
             background-image:
-              repeating-linear-gradient(transparent, transparent calc(8px - 1px), rgba(100,100,255,0.08) calc(8px - 1px), rgba(100,100,255,0.08) 8px),
-              repeating-linear-gradient(90deg, transparent, transparent calc(8px - 1px), rgba(100,100,255,0.08) calc(8px - 1px), rgba(100,100,255,0.08) 8px);
-            background-size: 8px 8px;
+              repeating-linear-gradient(
+                90deg,
+                rgba(124, 58, 237, 0.06) 0px,
+                rgba(124, 58, 237, 0.06) calc(100% / 12 - 16px * 11 / 12),
+                transparent calc(100% / 12 - 16px * 11 / 12),
+                transparent calc(100% / 12)
+              );
+          }
+          /* Column fills using CSS counters trick */
+          #nova-grid-col-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+            padding: 0 16px;
+            box-sizing: border-box;
+          }
+          #nova-grid-col-overlay > div {
+            background: rgba(124, 58, 237, 0.06);
+            border-left: 1px solid rgba(124, 58, 237, 0.12);
+            border-right: 1px solid rgba(124, 58, 237, 0.12);
+            min-height: 100%;
           }
         `;
-      } else if (el) {
-        el.textContent = "";
+        // Create column fill overlay if missing
+        if (!document.getElementById("nova-grid-col-overlay")) {
+          const overlay = document.createElement("div");
+          overlay.id = "nova-grid-col-overlay";
+          for (let i = 0; i < 12; i++) overlay.appendChild(document.createElement("div"));
+          document.body.appendChild(overlay);
+        }
+      } else {
+        if (el) el.textContent = "";
+        document.getElementById("nova-grid-col-overlay")?.remove();
       }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  // ── Drop indicator for sidebar drag-and-drop ─────────────────────────────────
+  // Renders a visual line/box when a component is being dragged from the sidebar.
+  useEffect(() => {
+    let indicator: HTMLDivElement | null = null;
+    const ACCENT = "#7c3aed";
+
+    const ensureIndicator = (): HTMLDivElement => {
+      if (indicator) return indicator;
+      const el = document.createElement("div");
+      el.id = "nova-drop-indicator";
+      el.style.cssText = "position:fixed;pointer-events:none;z-index:2147483001;box-sizing:border-box;transition:top 0.08s ease, left 0.08s ease, width 0.08s ease, height 0.08s ease;";
+      
+      const tooltip = document.createElement("div");
+      tooltip.id = "nova-drop-indicator-tooltip";
+      tooltip.style.cssText = "position:absolute;background:#7c3aed;color:#fff;font-family:sans-serif;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 2px 4px rgba(0,0,0,0.25);transition:opacity 0.15s;";
+      el.appendChild(tooltip);
+
+      document.body.appendChild(el);
+      indicator = el;
+      return el;
+    };
+
+    const clearIndicator = () => {
+      indicator?.remove();
+      indicator = null;
+    };
+
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type === "nova:dragOverEnd") {
+        clearIndicator();
+        return;
+      }
+      if (e.data?.type !== "nova:dragOverUpdate") return;
+      const { clientX, clientY, position } = e.data as { clientX: number; clientY: number; position: string };
+
+      // Find the nearest instance element under the pointer
+      const target = document.elementFromPoint(clientX, clientY);
+      const instEl = target?.closest(`[${selectorIdAttribute}]`) as HTMLElement | null;
+      if (!instEl) { clearIndicator(); return; }
+
+      const el = ensureIndicator();
+      const r = instEl.getBoundingClientRect();
+
+      const tooltip = el.querySelector("#nova-drop-indicator-tooltip") as HTMLDivElement | null;
+      if (tooltip) {
+        const compName = instEl.getAttribute("data-ws-component") || "element";
+        const cleanLabel = compName.split(":").pop() || compName;
+        tooltip.textContent = position === "into" ? `➔ Drop inside ${cleanLabel}` : position === "above" ? `▲ Insert above ${cleanLabel}` : `▼ Insert below ${cleanLabel}`;
+        
+        if (position === "below") {
+          tooltip.style.top = "4px";
+          tooltip.style.transform = "none";
+        } else {
+          tooltip.style.top = "-4px";
+          tooltip.style.transform = "translateY(-100%)";
+        }
+        tooltip.style.left = "4px";
+      }
+
+      if (position === "into") {
+        el.style.left = `${r.left}px`;
+        el.style.top = `${r.top}px`;
+        el.style.width = `${r.width}px`;
+        el.style.height = `${r.height}px`;
+        el.style.border = `2px solid ${ACCENT}`;
+        el.style.background = "rgba(124,58,237,0.08)";
+        el.style.borderTop = `2px solid ${ACCENT}`;
+      } else {
+        const y = position === "above" ? r.top : r.bottom;
+        el.style.left = `${r.left}px`;
+        el.style.top = `${y - 1}px`;
+        el.style.width = `${r.width}px`;
+        el.style.height = "0px";
+        el.style.border = "none";
+        el.style.background = "none";
+        el.style.borderTop = `2px solid ${ACCENT}`;
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      clearIndicator();
+    };
   }, []);
 
   // ── Link / form interceptor in design mode (M7b) ────────────────────────────
@@ -504,6 +647,13 @@ export const Canvas = () => {
   const elements = useElementsTree();
   const components = useStore($registeredComponents);
   const instances = useStore($instances);
+
+  console.log("[canvas] Render tick details:", {
+    librariesRegistered,
+    componentsSize: components.size,
+    instancesSize: instances.size,
+    instancesMap: Array.from(instances.entries()).map(([k, v]) => ({ id: k, children: v.children.length }))
+  });
 
   // Don't render until libraries are registered and at least one instance exists.
   if (!librariesRegistered || components.size === 0 || instances.size === 0) {

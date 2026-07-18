@@ -44,8 +44,16 @@ export function initDragReparent(): () => void {
   const ensureIndicator = (): HTMLDivElement => {
     if (indicator) return indicator;
     const el = document.createElement("div");
+    el.id = "nova-reparent-indicator";
     el.style.cssText =
-      "position:fixed;pointer-events:none;z-index:2147483001;box-sizing:border-box;transition:none;";
+      "position:fixed;pointer-events:none;z-index:2147483001;box-sizing:border-box;transition:top 0.08s ease, left 0.08s ease, width 0.08s ease, height 0.08s ease;";
+
+    const tooltip = document.createElement("div");
+    tooltip.id = "nova-reparent-indicator-tooltip";
+    tooltip.style.cssText =
+      "position:absolute;background:#7c3aed;color:#fff;font-family:sans-serif;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 2px 4px rgba(0,0,0,0.25);transition:opacity 0.15s;";
+    el.appendChild(tooltip);
+
     document.body.appendChild(el);
     indicator = el;
     return el;
@@ -57,6 +65,9 @@ export function initDragReparent(): () => void {
   };
 
   const positionFor = (target: HTMLElement, clientY: number, component: string): DropPosition => {
+    const comp = target.getAttribute("data-ws-component");
+    if (comp === "Body") return "into"; // Always drop into the root Body container
+
     const r = target.getBoundingClientRect();
     const ratio = (clientY - r.top) / Math.max(1, r.height);
     if (canAcceptChildren(component) && ratio > 0.25 && ratio < 0.75) return "into";
@@ -66,6 +77,28 @@ export function initDragReparent(): () => void {
   const paintIndicator = (target: HTMLElement, position: DropPosition) => {
     const el = ensureIndicator();
     const r = target.getBoundingClientRect();
+
+    const tooltip = el.querySelector("#nova-reparent-indicator-tooltip") as HTMLDivElement | null;
+    if (tooltip) {
+      const compName = target.getAttribute("data-ws-component") || "element";
+      const cleanLabel = compName.split(":").pop() || compName;
+      tooltip.textContent =
+        position === "into"
+          ? `➔ Move inside ${cleanLabel}`
+          : position === "above"
+          ? `▲ Move above ${cleanLabel}`
+          : `▼ Move below ${cleanLabel}`;
+
+      if (position === "below") {
+        tooltip.style.top = "4px";
+        tooltip.style.transform = "none";
+      } else {
+        tooltip.style.top = "-4px";
+        tooltip.style.transform = "translateY(-100%)";
+      }
+      tooltip.style.left = "4px";
+    }
+
     if (position === "into") {
       el.style.left = `${r.left}px`;
       el.style.top = `${r.top}px`;
@@ -73,6 +106,7 @@ export function initDragReparent(): () => void {
       el.style.height = `${r.height}px`;
       el.style.border = `2px solid ${ACCENT}`;
       el.style.background = "rgba(124,58,237,0.08)";
+      el.style.borderTop = `2px solid ${ACCENT}`;
     } else {
       const y = position === "above" ? r.top : r.bottom;
       el.style.left = `${r.left}px`;
@@ -96,6 +130,9 @@ export function initDragReparent(): () => void {
       const ov = overlayEl();
       if (ov) ov.style.pointerEvents = "none";
       document.body.style.cursor = "grabbing";
+
+      // Auto-enable grid guides when dragging starts!
+      window.postMessage({ type: "nova:gridGuides", visible: true }, window.location.origin);
     }
 
     ctx.targetId = null;
@@ -131,6 +168,9 @@ export function initDragReparent(): () => void {
     if (ov) ov.style.pointerEvents = "";
     document.body.style.cursor = "";
     clearIndicator();
+
+    // Auto-disable grid guides when dragging ends!
+    window.postMessage({ type: "nova:gridGuides", visible: false }, window.location.origin);
   };
 
   const onUp = () => {
@@ -172,9 +212,6 @@ export function initDragReparent(): () => void {
 
     const pressedId = instanceIdOf(e.target as Element);
     if (!pressedId) return;
-    // Only the already-selected element is draggable (select first, then move).
-    const selected = $selectedInstanceSelector.get();
-    if (!selected || selected[0] !== pressedId) return;
     // Root instance cannot be reparented.
     if (!buildParentMap($instances.get()).get(pressedId)) return;
 

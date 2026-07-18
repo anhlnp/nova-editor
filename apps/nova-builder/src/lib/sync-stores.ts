@@ -180,9 +180,8 @@ const waitForEmitter = (
   const tryGrab = (): boolean => {
     const emitter = window.__webstudioSharedSyncEmitter__;
     if (!emitter) return false;
-    // Consume it so embedded page scripts can't intercept the channel.
-    delete (window as unknown as { __webstudioSharedSyncEmitter__?: SyncEmitter })
-      .__webstudioSharedSyncEmitter__;
+    // Do not delete __webstudioSharedSyncEmitter__ from window so it survives
+    // canvas page re-renders/fast refresh mounts.
     onReady(emitter);
     return true;
   };

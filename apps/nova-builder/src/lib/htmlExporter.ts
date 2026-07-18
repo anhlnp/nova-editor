@@ -29,6 +29,33 @@ const TAG: Record<string, string> = {
   Form: "form", WebhookForm: "form", Input: "input", Textarea: "textarea",
   Select: "select", Label: "label", Checkbox: "input",
   List: "ul", ListItem: "li", Separator: "hr",
+  // HeroUI replicas → semantic HTML tags
+  "heroui:HeroUIButton": "button", "heroui:HeroUIInput": "div",
+  "heroui:HeroUICard": "div", "heroui:HeroUISwitch": "div",
+  "heroui:HeroUIChip": "span", "heroui:HeroUIDivider": "hr",
+  "heroui:HeroUISpinner": "div", "heroui:HeroUICode": "code",
+  "heroui:HeroUIProgress": "div", "heroui:HeroUIUser": "div",
+  "heroui:HeroUIRow": "div", "heroui:HeroUICol": "div",
+};
+
+// Inline styles for HeroUI components in exported HTML.
+const HEROUI_EXPORT_STYLES: Record<string, (props: Record<string, unknown>) => string> = {
+  "heroui:HeroUIButton": (p) => {
+    const colors: Record<string, string> = { default: "#3f3f46", primary: "#006FEE", secondary: "#9353d3", success: "#17c964", warning: "#f5a524", danger: "#f31260" };
+    const bg = colors[String(p.color ?? "primary")] ?? "#006FEE";
+    return `display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14px;padding:0 16px;height:40px;border-radius:12px;border:none;background:${bg};color:#fff;cursor:pointer;font-family:system-ui,sans-serif;`;
+  },
+  "heroui:HeroUICard": () => "background:#18181b;border:1px solid #27272a;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.3);padding:16px;color:#fafafa;font-family:system-ui,sans-serif;",
+  "heroui:HeroUIRow": (p) => `display:grid;grid-template-columns:repeat(12,1fr);gap:${p.gap ?? "16px"};width:100%;box-sizing:border-box;`,
+  "heroui:HeroUICol": (p) => { const s = Math.max(1, Math.min(12, Number(p.span) || 6)); return `grid-column:span ${s}/span ${s};min-width:0;`; },
+  "heroui:HeroUIChip": () => "display:inline-flex;align-items:center;font-size:12px;padding:4px 10px;border-radius:9999px;background:#3f3f46;color:#fafafa;font-family:system-ui,sans-serif;",
+  "heroui:HeroUIProgress": (p) => { const v = Math.max(0, Math.min(100, Number(p.value) || 50)); return `width:100%;height:6px;background:#27272a;border-radius:9999px;overflow:hidden;--progress-w:${v}%;`; },
+  "heroui:HeroUIInput": () => "display:flex;flex-direction:column;gap:4px;font-family:system-ui,sans-serif;width:100%;",
+  "heroui:HeroUISpinner": () => "display:inline-flex;flex-direction:column;align-items:center;gap:8px;",
+  "heroui:HeroUICode": () => "font-family:ui-monospace,'Fira Code',monospace;font-size:14px;padding:2px 8px;border-radius:6px;background:rgba(63,63,70,0.25);color:#d4d4d8;",
+  "heroui:HeroUIUser": () => "display:inline-flex;align-items:center;gap:12px;font-family:system-ui,sans-serif;color:#fafafa;",
+  "heroui:HeroUIDivider": () => "border:none;background:#27272a;height:1px;width:100%;margin:8px 0;",
+  "heroui:HeroUISwitch": () => "display:inline-flex;align-items:center;gap:8px;font-family:system-ui,sans-serif;color:#fafafa;",
 };
 
 const VOID_TAGS = new Set(["img", "input", "hr", "br"]);
@@ -123,6 +150,11 @@ function renderInstance(
   // Inline style prop (e.g. from Tailwind paste M7) travels through.
   if (typeof ip["style"] === "string" && ip["style"]) {
     attrs.push(`style="${esc(ip["style"] as string)}"`);
+  }
+  // HeroUI component inline styles for export
+  const heroStyleFn = HEROUI_EXPORT_STYLES[inst.component];
+  if (heroStyleFn && !ip["style"]) {
+    attrs.push(`style="${esc(heroStyleFn(ip))}"`);
   }
 
   const children = inst.children
@@ -254,6 +286,7 @@ export function exportPageToHtml(data: WebstudioData, page: Page, opts: ExportOp
     '  <meta charset="UTF-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
     `  <title>${esc(title)}</title>`,
+    '  <script src="https://cdn.tailwindcss.com"></script>',
     "  <style>",
     "    *, *::before, *::after { box-sizing: border-box; }",
     "    body { margin: 0; }",
