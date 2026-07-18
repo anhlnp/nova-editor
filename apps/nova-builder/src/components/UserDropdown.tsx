@@ -153,6 +153,43 @@ export function UserDropdown({ mode = "dark" }: UserDropdownProps) {
             </Link>
           )}
 
+          <Link
+            href="/settings/subscription"
+            onClick={() => setDropdownOpen(false)}
+            style={{
+              padding: "10px 16px",
+              fontSize: 14,
+              color: colors.linkColor,
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = colors.linkHoverBg)
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
+            </svg>
+            {t.panels.billingTitle}
+          </Link>
+
           <button
             onClick={() => { setDropdownOpen(false); signOut({ callbackUrl: "/" }); }}
             style={{

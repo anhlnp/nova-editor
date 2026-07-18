@@ -212,6 +212,22 @@ export const authOptions: NextAuthOptions = {
             undefined;
         }
       }
+      // Self-healing: if token.id is not a UUID but we have an email, look up the database UUID
+      const isUuid = (id?: string) => id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (token.email && !isUuid(token.id as string)) {
+        try {
+          const { getSupabaseAdmin } = await import("@/lib/supabaseAdmin");
+          const db = getSupabaseAdmin();
+          const { data } = await db.from("users").select("id").eq("email", token.email).maybeSingle();
+          if (data?.id) {
+            token.id = data.id;
+            token.sub = data.id;
+          }
+        } catch (e) {
+          console.error("[auth] Failed to heal non-UUID session", e);
+        }
+      }
+
       return token;
     },
 

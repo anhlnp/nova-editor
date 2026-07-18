@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/api/analytics/track",
   "/api/submissions",
   "/api/billing/webhook",
+  "/api/billing/payos",
   "/api/i18n",
   "/api/projects/demo",
   "/builder/demo",
