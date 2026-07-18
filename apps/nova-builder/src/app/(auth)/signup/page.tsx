@@ -41,18 +41,8 @@ function SignupForm() {
       return;
     }
 
-    const result = await signIn("credentials", {
-      email: email.trim().toLowerCase(),
-      password,
-      callbackUrl,
-      redirect: false,
-    });
     setBusy(false);
-    if (result?.error) {
-      setError("Sign-in failed. Please try again.");
-    } else if (result?.url) {
-      window.location.href = result.url;
-    }
+    window.location.href = `/login?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`;
   }
 
   return (

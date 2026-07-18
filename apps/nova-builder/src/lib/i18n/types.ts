@@ -56,6 +56,7 @@ export interface I18nAuthDictionary {
   passwordsNoMatch: string;
   passwordTooShort: string;
   registrationFailed: string;
+  registrationSuccess: string;
   verifyingEmail: string;
   emailVerifiedTitle: string;
   emailVerifiedBody: string;

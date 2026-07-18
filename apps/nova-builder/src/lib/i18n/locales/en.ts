@@ -51,6 +51,7 @@ export const enDictionary: I18nDictionary = {
     passwordsNoMatch: "Passwords do not match.",
     passwordTooShort: "Password must be at least 8 characters.",
     registrationFailed: "Registration failed. Please try again.",
+    registrationSuccess: "Registration successful! Please sign in with your new account.",
     verifyingEmail: "Verifying your email…",
     emailVerifiedTitle: "Email verified",
     emailVerifiedBody: "Your email address is confirmed. Thanks for securing your account!",
