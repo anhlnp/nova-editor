@@ -6,13 +6,17 @@ import { NextResponse } from "next/server";
 import { migrateToLatest } from "@/lib/migrate";
 import { serializeWebstudioData } from "@/lib/schema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-
+import { getDemoProjectJson } from "@/lib/demo-data";
 
 export async function GET(
   _req: Request,
   context: { params: Promise<{ projectId: string }> }
 ) {
   const { projectId } = await context.params;
+
+  if (projectId === "demo") {
+    return NextResponse.json(getDemoProjectJson());
+  }
 
   const { data: project, error } = await getSupabaseAdmin()
     .from("projects")

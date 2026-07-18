@@ -298,6 +298,7 @@ export const Canvas = () => {
   // Bypasses the SyncClient emitter chain (which has a startup race on demo).
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
+      if ($isPreviewMode.get()) return;
       if (e.data?.type !== "nova:instanceChildren") return;
       const { instanceId, children } = e.data as {
         instanceId: string;
@@ -318,6 +319,7 @@ export const Canvas = () => {
   // ── Grid guides (M10) — toggle visual 12-column grid overlay via postMessage ─
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
+      if ($isPreviewMode.get()) return;
       if (e.data?.type !== "nova:gridGuides") return;
       const STYLE_ID = "nova-grid-guides";
       let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
@@ -426,6 +428,7 @@ export const Canvas = () => {
     };
 
     const onMessage = (e: MessageEvent) => {
+      if ($isPreviewMode.get()) return;
       if (e.data?.type === "nova:dragOverEnd") {
         clearIndicator();
         return;
@@ -509,6 +512,7 @@ export const Canvas = () => {
   // Click-to-select (with shift-click multi-select) + hover + dblclick text editing.
   useEffect(() => {
     const clickHandler = (e: MouseEvent) => {
+      if ($isPreviewMode.get()) return;
       // Suppress click-to-select while Lexical editor is active.
       if ($textEditingInstance.get()) return;
       const el = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
@@ -560,6 +564,7 @@ export const Canvas = () => {
       );
     };
     const hoverHandler = (e: MouseEvent) => {
+      if ($isPreviewMode.get()) return;
       const el = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
       if (!el) {
         $hoveredInstanceSelector.set(undefined);
@@ -573,6 +578,7 @@ export const Canvas = () => {
     // Double-click activates the Lexical TextEditOverlay (React component).
     // No more contentEditable or execCommand.
     const dblClickHandler = (e: MouseEvent) => {
+      if ($isPreviewMode.get()) return;
       const target = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
       if (!target || !(target instanceof HTMLElement)) return;
       const raw = target.getAttribute(selectorIdAttribute);
@@ -617,6 +623,7 @@ export const Canvas = () => {
     };
 
     const contextMenuHandler = (e: MouseEvent) => {
+      if ($isPreviewMode.get()) return;
       e.preventDefault();
       const el = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
       if (!el) return;

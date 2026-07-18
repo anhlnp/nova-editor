@@ -14,7 +14,16 @@ import { compareMedia } from "@webstudio-is/css-engine";
 // ─── Canvas render mode ───────────────────────────────────────────────────────
 
 export type BuilderMode = "design" | "content" | "preview";
-export const $builderMode = atom<BuilderMode>("design");
+const getInitialBuilderMode = (): BuilderMode => {
+  if (typeof window !== "undefined") {
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    if (mode === "preview" || mode === "design" || mode === "content") {
+      return mode;
+    }
+  }
+  return "design";
+};
+export const $builderMode = atom<BuilderMode>(getInitialBuilderMode());
 export const $isPreviewMode = computed($builderMode, (m) => m === "preview");
 export const $isDesignMode = computed($builderMode, (m) => m === "design");
 export const $isContentMode = computed($builderMode, (m) => m === "content");
