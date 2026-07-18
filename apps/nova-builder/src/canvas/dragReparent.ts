@@ -19,6 +19,7 @@ type DragCtx = {
   dragging: boolean;
   targetId: string | null;
   position: DropPosition | null;
+  isDeleteArmed?: boolean;
 };
 
 function instanceIdOf(el: Element | null): string | null {
@@ -86,9 +87,10 @@ export function initDragReparent(): () => void {
         position === "into"
           ? `➔ Move inside ${cleanLabel}`
           : position === "above"
-          ? `▲ Move above ${cleanLabel}`
-          : `▼ Move below ${cleanLabel}`;
+            ? `▲ Move above ${cleanLabel}`
+            : `▼ Move below ${cleanLabel}`;
 
+      tooltip.style.background = "#7c3aed";
       if (position === "below") {
         tooltip.style.top = "4px";
         tooltip.style.transform = "none";
@@ -119,26 +121,50 @@ export function initDragReparent(): () => void {
     }
   };
 
-  const onMove = (e: MouseEvent) => {
-    if (!ctx) return;
-    if (!ctx.dragging) {
-      if (Math.abs(e.clientX - ctx.startX) < THRESHOLD && Math.abs(e.clientY - ctx.startY) < THRESHOLD) {
-        return;
-      }
-      ctx.dragging = true;
-      // Let elementFromPoint see through our own selection chrome.
-      const ov = overlayEl();
-      if (ov) ov.style.pointerEvents = "none";
-      document.body.style.cursor = "grabbing";
+  const paintDeleteIndicator = (clientX: number, clientY: number) => {
+    const el = ensureIndicator();
+    const tooltip = el.querySelector("#nova-reparent-indicator-tooltip") as HTMLDivElement | null;
+    if (tooltip) {
+      tooltip.textContent = `🗑 Release to delete`;
+      tooltip.style.background = "#ef4444";
+      tooltip.style.top = "0px";
+      tooltip.style.transform = "none";
+      tooltip.style.left = "0px";
+    }
+    const clampX = Math.max(10, Math.min(window.innerWidth - 150, clientX));
+    const clampY = Math.max(10, Math.min(window.innerHeight - 30, clientY));
 
-      // Auto-enable grid guides when dragging starts!
-      window.postMessage({ type: "nova:gridGuides", visible: true }, window.location.origin);
+    el.style.left = `${clampX}px`;
+    el.style.top = `${clampY}px`;
+    el.style.width = `120px`;
+    el.style.height = `24px`;
+    el.style.border = `2px dashed #ef4444`;
+    el.style.background = "rgba(239, 68, 68, 0.15)";
+  };
+
+  const handleMove = (clientX: number, clientY: number) => {
+    if (!ctx) return;
+
+    // Check if dragged outside the canvas viewport
+    const isOutside =
+      clientX < 0 ||
+      clientY < 0 ||
+      clientX > window.innerWidth ||
+      clientY > window.innerHeight;
+
+    if (isOutside) {
+      ctx.targetId = null;
+      ctx.position = null;
+      ctx.isDeleteArmed = true;
+      paintDeleteIndicator(clientX, clientY);
+      return;
     }
 
+    ctx.isDeleteArmed = false;
     ctx.targetId = null;
     ctx.position = null;
 
-    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const under = document.elementFromPoint(clientX, clientY);
     const targetId = instanceIdOf(under);
     const instances = $instances.get();
     if (!targetId || targetId === ctx.draggedId) {
@@ -157,10 +183,41 @@ export function initDragReparent(): () => void {
       clearIndicator();
       return;
     }
-    const position = positionFor(targetEl, e.clientY, targetInst.component);
+    const position = positionFor(targetEl, clientY, targetInst.component);
     ctx.targetId = targetId;
     ctx.position = position;
     paintIndicator(targetEl, position);
+  };
+
+  const onMove = (e: MouseEvent) => {
+    if (!ctx) return;
+    if (!ctx.dragging) {
+      if (Math.abs(e.clientX - ctx.startX) < THRESHOLD && Math.abs(e.clientY - ctx.startY) < THRESHOLD) {
+        return;
+      }
+      ctx.dragging = true;
+      // Let elementFromPoint see through our own selection chrome.
+      const ov = overlayEl();
+      if (ov) ov.style.pointerEvents = "none";
+      document.body.style.cursor = "grabbing";
+
+      // Auto-enable grid guides when dragging starts!
+      window.postMessage({ type: "nova:gridGuides", visible: true }, window.location.origin);
+    }
+    handleMove(e.clientX, e.clientY);
+  };
+
+  const onParentMove = (e: MouseEvent) => {
+    if (!ctx) return;
+    const iframe = window.frameElement;
+    if (iframe) {
+      const rect = iframe.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const relativeY = e.clientY - rect.top;
+      handleMove(relativeX, relativeY);
+    } else {
+      handleMove(-1, -1);
+    }
   };
 
   const finish = () => {
@@ -176,6 +233,11 @@ export function initDragReparent(): () => void {
   const onUp = () => {
     window.removeEventListener("mousemove", onMove, true);
     window.removeEventListener("mouseup", onUp, true);
+    try {
+      window.parent.removeEventListener("mousemove", onParentMove, true);
+      window.parent.removeEventListener("mouseup", onUp, true);
+    } catch (e) { }
+
     const active = ctx;
     ctx = null;
     if (!active) return;
@@ -190,6 +252,17 @@ export function initDragReparent(): () => void {
     };
     window.addEventListener("click", swallow, true);
     setTimeout(() => window.removeEventListener("click", swallow, true), 0);
+
+    if (active.isDeleteArmed) {
+      window.parent.postMessage(
+        {
+          type: "nova:deleteInstance",
+          instanceId: active.draggedId,
+        },
+        window.location.origin
+      );
+      return;
+    }
 
     if (active.targetId && active.position) {
       window.parent.postMessage(
@@ -225,6 +298,10 @@ export function initDragReparent(): () => void {
     };
     window.addEventListener("mousemove", onMove, true);
     window.addEventListener("mouseup", onUp, true);
+    try {
+      window.parent.addEventListener("mousemove", onParentMove, true);
+      window.parent.addEventListener("mouseup", onUp, true);
+    } catch (e) { }
   };
 
   document.addEventListener("mousedown", onDown, true);
@@ -232,6 +309,10 @@ export function initDragReparent(): () => void {
     document.removeEventListener("mousedown", onDown, true);
     window.removeEventListener("mousemove", onMove, true);
     window.removeEventListener("mouseup", onUp, true);
+    try {
+      window.parent.removeEventListener("mousemove", onParentMove, true);
+      window.parent.removeEventListener("mouseup", onUp, true);
+    } catch (e) { }
     finish();
   };
 }

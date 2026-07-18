@@ -31,6 +31,7 @@ import { writeStyle } from "@/lib/styleInspectorWrite";
 import type { AnyStyleDecl } from "@/lib/styleValueConversion";
 import { applyReparent } from "@/lib/treeMove";
 import type { SyncEmitter } from "@/lib/sync-client";
+import { deleteInstance } from "@/lib/edit-operations";
 
 import { useProjectLoad } from "@/builder/hooks/useProjectLoad";
 import { useBuilderKeyboard } from "@/builder/hooks/useBuilderKeyboard";
@@ -212,6 +213,16 @@ export default function BuilderPage() {
         const next = applyReparent($instances.get(), draggedId, targetId, position);
         if (next && next !== $instances.get()) {
           updateData(({ instances }) => replaceMap(instances, next));
+        }
+        return;
+      }
+      // Drag-to-delete: remove instance when dragged out of canvas.
+      if (e.data?.type === "nova:deleteInstance") {
+        const { instanceId } = e.data as { instanceId: string };
+        const { updated, deleted } = deleteInstance(instanceId, $instances.get());
+        if (deleted) {
+          updateData(({ instances }) => replaceMap(instances, updated));
+          $selectedInstanceSelector.set(undefined);
         }
         return;
       }
@@ -431,7 +442,7 @@ export default function BuilderPage() {
         <div style={{ gridArea: "footer", background: "#0a0a14", borderTop: "1px solid rgba(255,255,255,0.08)" }} />
       )}
 
-            {/* Coach marks — first-time builder onboarding (self-dismisses to localStorage) */}
+      {/* Coach marks — first-time builder onboarding (self-dismisses to localStorage) */}
       {loadState === "ready" && !isDemo && <CoachMarks visible={true} />}
 
       {/* Keyboard shortcuts modal — toggled by "?" key */}
