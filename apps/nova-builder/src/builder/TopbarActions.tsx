@@ -2,7 +2,20 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@nanostores/react";
-import { $projectMeta } from "@/lib/data-stores";
+import {
+  $projectMeta,
+  $pages,
+  $assets,
+  $instances,
+  $props,
+  $dataSources,
+  $resources,
+  $breakpoints,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+} from "@/lib/data-stores";
+import { serializeWebstudioData } from "@/lib/schema";
 import {
   $builderMode,
   $aiPanelOpen,
@@ -13,6 +26,9 @@ import {
   $canvasZoom,
   $gridGuidesVisible,
   $cssPreviewOpen,
+  $cssVars,
+  $interactions,
+  $customCss,
 } from "@/lib/nano-states";
 import { DeployPanel } from "./DeployPanel";
 import { CollaboratorAvatars } from "./PresenceLayer";
@@ -118,17 +134,17 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
         {/* Language toggle — always visible; persists across F5 */}
         <LangToggle />
 
-        {/* 1 — Mode pills: Design / Content / Preview */}
+        {/* 1 — Mode pills: Design / Content */}
         <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, overflow: "hidden", flexShrink: 0 }}>
-          {(["design", "content", "preview"] as const).map((m) => (
+          {(["design", "content"] as const).map((m) => (
             <button
               key={m}
               onClick={() => $builderMode.set(m)}
-              title={m === "design" ? "Design mode" : m === "content" ? "Content-edit mode" : "Preview mode"}
+              title={m === "design" ? "Design mode" : "Content-edit mode"}
               style={{
                 background: mode === m ? "rgba(124,58,237,0.18)" : "none",
                 border: "none",
-                borderRight: m !== "preview" ? "1px solid rgba(255,255,255,0.08)" : "none",
+                borderRight: m !== "content" ? "1px solid rgba(255,255,255,0.08)" : "none",
                 cursor: "pointer",
                 color: mode === m ? C.accentText : C.textMuted,
                 fontSize: 12,
@@ -148,6 +164,46 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
           <>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", fontFamily: C.font, padding: "0 4px" }}>{t.builder.demoNotice}</span>
             <button onClick={() => router.push("/signup")} style={{ padding: "4px 14px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, rgba(124,58,237,0.9) 0%, rgba(79,70,229,0.85) 100%)", color: "#fff", fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}>{t.builder.signUpFree}</button>
+            <button
+              onClick={() => {
+                const data = {
+                  pages: $pages.get()!,
+                  assets: $assets.get(),
+                  instances: $instances.get(),
+                  props: $props.get(),
+                  dataSources: $dataSources.get(),
+                  resources: $resources.get(),
+                  breakpoints: $breakpoints.get(),
+                  styles: $styles.get(),
+                  styleSources: $styleSources.get(),
+                  styleSourceSelections: $styleSourceSelections.get(),
+                };
+                const serialized = serializeWebstudioData(data);
+                const demoPayload = {
+                  id: "demo",
+                  name: "Demo — Nova Builder",
+                  schemaVersion: "5.0",
+                  data: serialized,
+                  cssVars: $cssVars.get(),
+                  interactions: $interactions.get(),
+                  customCss: $customCss.get(),
+                  updatedAt: new Date().toISOString(),
+                };
+                localStorage.setItem("nova-demo-project-data", JSON.stringify(demoPayload));
+                window.open("/preview/demo", "_blank");
+              }}
+              style={{ ...btnBase, transition: "all 0.15s" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.color = C.textMuted;
+              }}
+            >
+              Preview
+            </button>
           </>
         ) : (
           <>
@@ -195,6 +251,24 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
                 style={{ ...btnBase, border: `1px solid ${published ? "rgba(5,150,105,0.45)" : "rgba(255,255,255,0.1)"}`, background: published ? "rgba(5,150,105,0.12)" : "transparent", color: published ? "#6ee7b7" : C.textMuted, transition: "all 0.15s" }}
               >
                 {published ? t.builder.copied : t.builder.publish}
+              </button>
+            )}
+
+            {/* Preview Button */}
+            {meta && (
+              <button
+                onClick={() => window.open(`/preview/${meta.id}`, "_blank")}
+                style={{ ...btnBase, transition: "all 0.15s" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
+                  e.currentTarget.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.color = C.textMuted;
+                }}
+              >
+                Preview
               </button>
             )}
 

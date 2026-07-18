@@ -2,6 +2,35 @@
 
 ---
 
+## [25.2.3] — 2026-07-18
+
+### Feature: Beautiful loading state for preview route (Patch/Gemini 3.5 Flash (Medium))
+
+- **Modern loading skeleton**: Added a modern pulsing HTML skeleton loader (Header, Hero block, body cards) and a smooth circular spinner on a clean white background, replacing the basic plain text loader.
+- **Prevent dark background flash**: Configured `$builderMode` to initialize directly from the URL query params (`mode=preview`) on mount, and updated the preview iframe source to `/canvas?mode=preview`. This prevents the canvas from briefly rendering with default dark-mode builder classes on mount before syncing.
+
+## [25.2.2] — 2026-07-18
+
+### Fix: Preview not showing added components in demo project (Patch/Gemini 3.5 Flash (Medium))
+
+- **Local preview state synchronization**: Configured the demo Preview button in `TopbarActions.tsx` to serialize and save the current builder state to `localStorage` under `"nova-demo-project-data"` before opening `/preview/demo`.
+- **Preview localStorage integration**: Updated the preview page at `/preview/[projectId]/page.tsx` to read the cached data from `localStorage` if `projectId === "demo"`, preventing edits from being lost.
+
+## [25.2.1] — 2026-07-18
+
+### Fix: Preview button hidden in demo project (Patch/Gemini 3.5 Flash (Medium))
+
+- **Demo project preview support**: Added the **Preview** button to the topbar actions in demo mode, opening `/preview/demo`.
+- **Demo preview API route support**: Added a check in `api/preview/[projectId]/route.ts` to return the static `getDemoProjectJson` if the project ID is `"demo"`.
+
+## [25.2.0] — 2026-07-18
+
+### Phase 76 — Complete MVP Preview Route (Minor/Gemini 3.5 Flash (Medium))
+
+- **Topbar preview option**: Removed local "preview" mode pill inside the builder and added a standalone **Preview** button that opens `/preview/[projectId]` in a new tab.
+- **Dynamic document title**: Updated preview route `page.tsx` to set `document.title = json.name` as soon as the project is loaded, ensuring correct tab title branding.
+- **Clean fullscreen canvas preview**: Updated canvas component and route wrapper to hide the `DiagnosticsOverlay`, omit builder-specific theme classes, and disable all click-to-select, hover highlights, inline text editing, context menu, and other drag/drop listeners in preview mode.
+
 ## [25.1.4] — 2026-07-18
 
 ### Fix: Complete Google OAuth user database provisioning (Patch/Haiku)

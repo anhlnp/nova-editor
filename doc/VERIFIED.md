@@ -1,5 +1,37 @@
 # Nova — Verified Feature Ledger
 
+## nova-builder / v25.2.3 — Preview loader & flash prevention (2026-07-18)
+
+| ID | Feature | Status |
+|---|---|---|
+| PREV-LD1 | Loading state renders white background, circular spinner, and pulsing page skeletons | 🟡 |
+| PREV-LD2 | Canvas reads `mode=preview` parameter from URL and loads directly into preview mode | 🟡 |
+| PREV-LD3 | Zero flash of dark background classes or diagnostics overlay on iframe mount | 🟡 |
+
+## nova-builder / v25.2.2 — Demo preview local state sync (2026-07-18)
+
+| ID | Feature | Status |
+|---|---|---|
+| PREV-DM3 | Demo builder serializes and saves active data-store atoms to localStorage on Preview click | 🟡 |
+| PREV-DM4 | Demo preview loads from localStorage to reflect builder changes in real-time | 🟡 |
+
+## nova-builder / v25.2.1 — Demo preview support (2026-07-18)
+
+| ID | Feature | Status |
+|---|---|---|
+| PREV-DM1 | Preview button is visible and functional in demo mode | 🟡 |
+| PREV-DM2 | `/api/preview/demo` returns the static demo data successfully | 🟡 |
+
+## nova-builder / v25.2.0 — MVP Preview Route completion (2026-07-18)
+
+| ID | Feature | Status |
+|---|---|---|
+| PREV-T1 | Topbar Actions has "Preview" button opening `/preview/[id]` in new tab | 🟡 |
+| PREV-T2 | Removed local "preview" mode pill from local builder switcher | 🟡 |
+| PREV-DT | Dynamically sets `document.title` to loaded project's name | 🟡 |
+| PREV-CC | Canvas element outlines, hovers, text editing, context menu are disabled in preview mode | 🟡 |
+| PREV-DO | Diagnostics overlay is hidden and dark container classes omitted when previewing | 🟡 |
+
 ## nova-builder / v25.1.4 — Google OAuth user provisioning (2026-07-18)
 
 | ID | Feature | Status |

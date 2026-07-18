@@ -42,6 +42,8 @@ const canvasStyles = `
 `;
 
 import { useState, useEffect } from "react";
+import { useStore } from "@nanostores/react";
+import { $isPreviewMode } from "@/lib/nano-states";
 
 function DiagnosticsOverlay() {
   const [errors, setErrors] = useState<string[]>([]);
@@ -110,13 +112,21 @@ function DiagnosticsOverlay() {
 }
 
 export default function CanvasPage() {
+  const isPreview = useStore($isPreviewMode);
+
   return (
     <HeroUIProvider>
       <style dangerouslySetInnerHTML={{ __html: canvasStyles }} />
-      <div className="dark text-foreground bg-background min-h-screen relative">
-        <CanvasClient />
-        <DiagnosticsOverlay />
-      </div>
+      {isPreview ? (
+        <div className="min-h-screen relative">
+          <CanvasClient />
+        </div>
+      ) : (
+        <div className="dark text-foreground bg-background min-h-screen relative">
+          <CanvasClient />
+          <DiagnosticsOverlay />
+        </div>
+      )}
     </HeroUIProvider>
   );
 }

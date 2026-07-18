@@ -119,13 +119,28 @@ export default function PreviewPage() {
 
     (async () => {
       try {
-        const res = await fetch(`/api/preview/${projectId}`, { signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status} — project not found`);
-        const json: ProjectApiResponse = await res.json();
+        let json: ProjectApiResponse;
+        if (projectId === "demo") {
+          const cached = localStorage.getItem("nova-demo-project-data");
+          if (cached) {
+            json = JSON.parse(cached);
+          } else {
+            const res = await fetch(`/api/preview/${projectId}`, { signal: controller.signal });
+            if (!res.ok) throw new Error(`HTTP ${res.status} — project not found`);
+            json = await res.json();
+          }
+        } else {
+          const res = await fetch(`/api/preview/${projectId}`, { signal: controller.signal });
+          if (!res.ok) throw new Error(`HTTP ${res.status} — project not found`);
+          json = await res.json();
+        }
 
         const data = deserializeWebstudioData(json.data);
         seedDataStores(data);
         $projectMeta.set({ id: json.id, name: json.name, updatedAt: json.updatedAt });
+        if (typeof document !== "undefined") {
+          document.title = json.name;
+        }
 
         // Published-site extras (R5): custom CSS, CSS vars, and interactions
         // sync into the canvas; preview mode activates the interaction runtime.
@@ -265,21 +280,104 @@ export default function PreviewPage() {
         <div
           style={{
             height: "100%",
+            width: "100%",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#94a3b8",
+            flexDirection: "column",
+            background: "#ffffff",
             fontFamily: "system-ui, sans-serif",
-            fontSize: 14,
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          Loading preview…
+          {/* Pulsing and spinning keyframes */}
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes pulse {
+              0%, 100% { opacity: 0.6; }
+              50% { opacity: 0.3; }
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .skeleton {
+              background: #e2e8f0;
+              border-radius: 4px;
+              animation: pulse 1.5s infinite ease-in-out;
+            }
+            .spinner {
+              border: 3px solid #f3f3f3;
+              border-top: 3px solid #7c3aed;
+              border-radius: 50%;
+              width: 24px;
+              height: 24px;
+              animation: spin 0.8s linear infinite;
+            }
+          `}} />
+
+          {/* Spinner Overlay */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+              zIndex: 10,
+            }}
+          >
+            <div className="spinner" />
+            <div style={{ fontSize: 13, color: "#64748b", fontWeight: 500 }}>Loading preview…</div>
+          </div>
+
+          {/* Header Skeleton */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 40px", borderBottom: "1px solid #f1f5f9" }}>
+            <div className="skeleton" style={{ width: 120, height: 28, borderRadius: 6 }} />
+            <div style={{ display: "flex", gap: 24 }}>
+              <div className="skeleton" style={{ width: 60, height: 16 }} />
+              <div className="skeleton" style={{ width: 60, height: 16 }} />
+              <div className="skeleton" style={{ width: 60, height: 16 }} />
+            </div>
+            <div className="skeleton" style={{ width: 90, height: 32, borderRadius: 6 }} />
+          </div>
+
+          {/* Hero Skeleton */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 20px 40px", textAlign: "center", flexShrink: 0 }}>
+            <div className="skeleton" style={{ width: 140, height: 20, marginBottom: 20, borderRadius: 10 }} />
+            <div className="skeleton" style={{ width: "min(480px, 80vw)", height: 44, marginBottom: 16, borderRadius: 8 }} />
+            <div className="skeleton" style={{ width: "min(360px, 60vw)", height: 20, marginBottom: 32 }} />
+            <div style={{ display: "flex", gap: 16 }}>
+              <div className="skeleton" style={{ width: 120, height: 40, borderRadius: 6 }} />
+              <div className="skeleton" style={{ width: 120, height: 40, borderRadius: 6 }} />
+            </div>
+          </div>
+
+          {/* Body Cards Skeleton */}
+          <div style={{ display: "flex", gap: 24, padding: "40px", justifyContent: "center", flex: 1, maxWidth: 1200, margin: "0 auto", width: "100%" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, maxWidth: 320 }}>
+              <div className="skeleton" style={{ width: "100%", height: 160, borderRadius: 8 }} />
+              <div className="skeleton" style={{ width: "70%", height: 20 }} />
+              <div className="skeleton" style={{ width: "90%", height: 14 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, maxWidth: 320 }}>
+              <div className="skeleton" style={{ width: "100%", height: 160, borderRadius: 8 }} />
+              <div className="skeleton" style={{ width: "70%", height: 20 }} />
+              <div className="skeleton" style={{ width: "90%", height: 14 }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, maxWidth: 320 }}>
+              <div className="skeleton" style={{ width: "100%", height: 160, borderRadius: 8 }} />
+              <div className="skeleton" style={{ width: "70%", height: 20 }} />
+              <div className="skeleton" style={{ width: "90%", height: 14 }} />
+            </div>
+          </div>
         </div>
       )}
       {state === "ready" && (
         <iframe
           ref={iframeRef}
-          src="/canvas"
+          src="/canvas?mode=preview"
           onLoad={onIframeLoad}
           style={{ width: "100%", height: "100%", border: "none" }}
           title="Preview"
