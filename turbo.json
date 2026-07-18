@@ -5,6 +5,35 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**"]
     },
+    "@webstudio-is/icons#build": {
+      "dependsOn": []
+    },
+    "@webstudio-is/css-engine#build": {
+      "dependsOn": ["@webstudio-is/fonts#build"]
+    },
+    "@webstudio-is/css-data#build": {
+      "dependsOn": ["@webstudio-is/css-engine#build"]
+    },
+    "@webstudio-is/sdk#build": {
+      "dependsOn": [
+        "@webstudio-is/css-engine#build",
+        "@webstudio-is/fonts#build",
+        "@webstudio-is/icons#build",
+        "@webstudio-is/wsauth#build"
+      ]
+    },
+    "@webstudio-is/image#build": {
+      "dependsOn": ["@webstudio-is/sdk#build"]
+    },
+    "@webstudio-is/react-sdk#build": {
+      "dependsOn": [
+        "@webstudio-is/css-engine#build",
+        "@webstudio-is/fonts#build",
+        "@webstudio-is/icons#build",
+        "@webstudio-is/image#build",
+        "@webstudio-is/sdk#build"
+      ]
+    },
     "typecheck": {
       "dependsOn": []
     },
