@@ -1,0 +1,18 @@
+input - output
+Ngôn ngữ tự nhiên
+Người dùng input prompt hoặc template, outcome là webstỉe, cta, blog
+Thầy bên khởi nghiệp sẽ biết đối tượng đang báo cáo alf gì, sẽnghe ý tưởng bằng ngôn ngữ nào (Elementor, Gutenberg, Ladipage, Wix)
+Chưa ai có tài khoản github, test trc, bản showcase
+Mvp phải trực diện, overengineering, cần demo edit
+website của bọn em có ưu điểm gì, nêu ra usp của sản phẩm, tại sao dùng của mình
+Chỉ có edit thì ko có usp
+con người đang hiểu ai là gì, Bị giới hạn, ai ít nhất nên giống phổ thông hiện tại
+Về cơ bản ai đang chọn ý tưởng, về cơ bản đang vô tình đưa ra giới hạn của chính ai, 
+điều hướng về style đã đăng ký
+chưa có đủ góc nhìn từ người dùng, sẽ bị trình bày tơi đâu sẽ bị phản biện tới đó
+Chưa xác định đc lợi thế cạnh tranh, chưa cần code, ít nhất làm đc giao diện -> bước đầu. demo -> chủ động prompt, mô tả ý tưởng, vì đây chỉ là bản demo nên chúng t chỉ hỗ trợ, nói rõ ràng giới hạn của mình
+Câu hỏi: đầu ra cho sản phẩm. Thiếu ai tự push
+Connect github, chưa hỗ trợ luồng cho người dùng thương mại, quản lí tài khoản như thế nào, chưa có phương thức để storage và sync
+Chưa chạm đc nút tích hợp ai agent, scope lại mvp sẽ muốn show cái gì trong đó, mỗi thứ đang thiếu 1 ít. 
+Outcome là trình bày đc ý tưởng của mình, tạo ra những , thiếu người thiếu vốn, ít nhất phải show đc ý tưởng đó sẽ như thế nào nếu có đủ tài nguyên. ít nhất trong bản demo sẽ phải có 1 flow work vô cùng hoàn hảo.
+Quan trọng phải show đc ý tưởng nhìn sẽ như thế nào khi nó hoàn thành, khi đi gọi vốn sẽ phải có 1 số phần fake 1 tí. quan trọng phải có luồng. nếu có đầy đủ hết rồi thì đi commercial luôn thôi.

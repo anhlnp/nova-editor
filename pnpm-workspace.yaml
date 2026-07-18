@@ -1,0 +1,4 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  # Webstudio packages are extracted to packages/ws-* — reference/ no longer in workspace.

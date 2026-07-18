@@ -1,0 +1,34 @@
+---
+name: project-nova-editor-redesign
+description: Editor redesign initiative — webstudio editor-parity first, Nova Figma gizmos as ceiling; full proposal in doc/redesign-webstudio-parity.md
+metadata:
+  type: project
+---
+
+Editor redesign agreed 2026-06-26. User unhappy with current block/page/tabs UI. Goal: reach parity with webstudio's **working editor** features mapped onto Nova's old mental model (Document-authority ADR-042 + bounded-Tailwind classOverrides ADR-018 + I1–I10), **then** re-attach Nova's Figma gizmos on top. Full proposal: **doc/redesign-webstudio-parity.md**.
+
+**Audit diagnosis (why current editor is "chưa ổn"):** over-consolidated (LeftPanel g+ RightPanel hidden tabs), over-ambitious canvas (Figma gizmos + Webflow flow DnD layered, all 🟡 unverified), missing webstudio's Settings/Style split + style provenance + Content/Preview modes.
+
+**Ratified decisions (user, 2026-06-26):**
+1. Right panel = **segmented Settings/Style** (one 280px panel, segmented control — NOT hidden tabs, NOT two separate panels).
+2. **Defer CMS/data entirely** — parity scope is editor only (canvas/left/right/modes/breakpoints). Webstudio's CMS/data-variables/expression-binding = separate pillar, built later; Nova has no data layer.
+
+**Redesign principles:** (1) one panel = one job; (2) webstudio = floor, Nova gizmos = ceiling (ship flow-DnD parity first, gizmos last behind an Advanced Design mode); (3) keep old spine (Document-first, bounded classOverrides — borrow webstudio UX/IA, not its raw-CSS/CSS-var/token model).
+
+**Target IA:** left icon-rail with 4 one-job panels (Add / Navigator / Assets / Pages) replacing combined LeftPanel; Navigator becomes first-class (Global Root + CSS preview + depth-drag); right = segmented Settings/Style + provenance label-colors (pure fn over classOverrides+variant+parent, no schema change) + style modes cut 4→2 (Simple/Advanced); top bar gains Design/Content/Preview modes + breakpoint-sized canvas + Hide UI.
+
+**Phasing (local-first):** P0 shell/IA (no new logic, lowest risk) → P1 Navigator depth + DnD never-error verified → P2 Assets+Pages folders → P3 breakpoint canvas + provenance → P4 Global Root/tokens → P5 Content/Preview modes → P6 re-attach Nova gizmos.
+
+**Re-audit corrections (2026-06-26, code-grounded — don't repeat the wrong assumptions):**
+- C1: Nova ALREADY has the left icon-rail (LeftPanel.tsx L78, toggleLeftSection) like webstudio sidebar-left.tsx. IA is fine; real work = declutter rail (Blocks-vs-Components redundancy, fold AI/Templates, Theme bolted into Pages), add Assets panel, split the 2110-line monolith. NOT "rebuild rail."
+- C2: Webstudio ALSO tabs Style/Settings (inspector.tsx PanelTabs) — same as nova RightPanel Props|Style tabs. Tabs are fine; real gap = rename Props→Settings + mode-gate Style tab. Segmented choice is cosmetic.
+- C3: Nova ALREADY has viewport→canvas width (TopBar + Canvas.tsx L62 VIEWPORT_WIDTH). Real gap = viewport preview is DISCONNECTED from style breakpoint (StylePanel.tsx L102 md:/lg:). Phase 3 = UNIFY the two breakpoint concepts, not add a canvas.
+- Confirmed gaps stand: NO modes (uiStore has no `mode` field — biggest commercial gap), no Assets panel, Navigator lacks css-preview + Global Root.
+
+**Governing constraint (user, 2026-06-26): PATTERN-MATCH webstudio UX, do NOT code-port; never break nova backend.** Decisive finding: webstudio editor UI is welded to its backend — every style control calls `setProperty(cssProperty)(StyleValue)` → `serverSyncStore.createTransaction([$styles,...])` (CSS-property model + nanostores + immerhin sync). Porting the UI imports that data model = replaces nova's Document/classOverrides backend. So literal port is impossible. SAFE because both editors already decouple presentation from data: nova sections take `extract`/`set`/`setExclusive`/`mutate` props → setNodeProps → useDocumentWrite → Document. Rework lives ABOVE that seam; new widgets reach backend ONLY via existing set/extract/setNodeProps. Backend allowlist (must-not-touch): packages/{schema,editor,registry,renderer,ai,git}, projectStore, makeCraftComponent, useDocumentWrite/setNodeProps, I1–I10 + tests, layoutModel/freePosition parse-write contract. Free to rework: apps/studio/src/components/editor/* + StylePanel.utils/simpleModeUtils/styleSummary + uiStore. Bounded Tailwind stays (scrub snaps to TW scale; per-side pt-*/pr-*; provenance = breakpoint-variant+inheritance not tokens; ephemeral preview = Phase-F isTransientCanvasEdit). Blocks rework = primitive-first (Box/Text/Image/Link core), presets demoted. Nova already has a box-model spacing widget (StylePanel.tsx L1031) — the margin/padding adjuster is the canonical "UI rework acceptable" case.
+
+**Execution = Phase G ledger (ratified 2026-06-26, in ROADMAP.md "Phase G — Editor Parity"):** audit→version gate per subsystem. Each subsystem gets a parity micro-audit (read + 1 browser session, list subtle/incomplete gaps); OK→mark ✅ in VERIFIED, NO version; not-OK→ONE release bumped by risk (polish=Patch/Haiku, rework=Minor/Sonnet, architecture=Major-by-risk/Opus). Versions minted on not-OK verdict, NOT pre-assigned. Constraint: no schema change ⇒ schemaVersion FROZEN at 4.0 ⇒ all releases Minor/Patch (Major-by-risk only for Modes G10 / DnD G9), never Major-by-schema. Version line = **v7.x** (v7.1.0, v7.2.0…). **User decisions 2026-06-26: (1) Gate 0 FIRST** = browser-QA the "Keep" parts before any rework, which simultaneously closes Phase F (v7.0.0–7.0.2 are 🟡 — auditing keep-parts IS the Phase F browser QA). **(2) v7.x minor line.** Backlog order: G0 verify-Keep → G1 split monoliths → G2 Settings tag/id/class → G3 Pages/Theme split → G4 Space widget ws-grade (seam-refactor template) → G5 Add primitive-first → G6 Navigator depth → G7 RenderNode split → G8 unify breakpoints → G9 DnD never-error → G10 Modes → G11 Assets → G12 provenance.
+
+**Audit instrument (rewritten 2026-06-27): doc/qa-checklist.md.** User found the OLD checklist confusing + lacking feedback guidance → couldn't verify. Rewritten as a 22-subsystem parity audit (Keep K1–K10 / Adjust A1–A10 / New N1–N3) with an explicit **feedback protocol**: per item reply `ID: ✅` (works+matches target) / `⚠️ <what's subtly off/missing>` (the incomplete-not-different worry) / `❌ <what broke>`. Each subsystem has a "Target (webstudio)" line as the comparison bar. Loop: all-✅ subsystem → flip VERIFIED rows, no version; any ⚠️/❌ → one Phase G fix release. Foot-of-doc maps each audit ID → Phase G gate. Browser QA is human-in-the-loop (env is typecheck-only). G0 = the 10 Keep audits broken out per-subsystem (not lumped).
+
+**How to apply:** When building editor work, follow doc/redesign-webstudio-parity.md phase order; prefer verifying each slice in browser over adding logic-complete-but-unverified breadth. See [[project-nova-strategic-pivot]] and [[project-nova-design-mode]].

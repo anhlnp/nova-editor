@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Default semantic tokens (:root + dark mode) ──────────────────────────────
+   Ensures both the builder ([data-theme="dark"]) and unthemed app pages like
+   /projects, /settings, /analytics receive consistent --ui-* and --nova-* tokens. */
+:root,
+[data-theme="dark"] {
+  --ui-bg: #0a0a14;
+  --ui-card: #0f172a;
+  --ui-surface: #12121f;
+  --ui-section-bg: rgba(255,255,255,0.03);
+  --ui-input-bg: rgba(255,255,255,0.06);
+  --ui-hover-bg: rgba(255,255,255,0.05);
+  --ui-card-hover: #141428;
+  --ui-border: rgba(255,255,255,0.08);
+  --ui-border-hover: rgba(255,255,255,0.14);
+  --ui-border-top: rgba(255,255,255,0.06);
+  --ui-border-bottom: rgba(255,255,255,0.06);
+  --ui-text: #e2e8f0;
+  --ui-text-dim: rgba(255,255,255,0.72);
+  --ui-text-muted: rgba(255,255,255,0.60);
+  --ui-text-selected: #ffffff;
+  --ui-accent: #7c3aed;
+  --ui-accent-hover: #6d28d9;
+  --ui-accent-light: #a78bfa;
+  --ui-accent-text: #c4b5fd;
+  --ui-accent-border: rgba(124,58,237,0.55);
+  --ui-accent-bg: rgba(124,58,237,0.22);
+  --ui-success: #10b981;
+  --ui-danger: #f87171;
+  --ui-error: #ef4444;
+  --ui-warning: #f59e0b;
+  --ui-info: #60a5fa;
+  --ui-active-green: #34d399;
+  --ui-active: rgba(124,58,237,0.18);
+  --ui-active-border: rgba(124,58,237,0.70);
+  --ui-active-text: #c4b5fd;
+  --ui-bg-selected: rgba(124,58,237,0.20);
+  --ui-bg-hover: rgba(255,255,255,0.05);
+  --ui-bg-multi-selected: rgba(124,58,237,0.12);
+  --ui-bg-drop-into: rgba(124,58,237,0.25);
+  --ui-bg-inactive: rgba(255,255,255,0.02);
+  --ui-drop-indicator: #7c3aed;
+  --ui-tab-active: #c4b5fd;
+  --ui-tab-inactive: rgba(255,255,255,0.50);
+  --ui-pill: rgba(255,255,255,0.08);
+  --ui-pill-hover: rgba(255,255,255,0.14);
+  --ui-pill-border: rgba(255,255,255,0.12);
+  --ui-pill-text: #e2e8f0;
+  --ui-code-key: #93c5fd;
+  --ui-code-val: #86efac;
+  --ui-overlay: rgba(0,0,0,0.55);
+  --ui-muted: rgba(255,255,255,0.35);
+  --ui-input-border: rgba(255,255,255,0.10);
+  --ui-input: rgba(255,255,255,0.05);
+
+  --nova-bg: var(--ui-bg);
+  --nova-card: var(--ui-card);
+  --nova-surface: var(--ui-surface);
+  --nova-border: var(--ui-border);
+  --nova-text: var(--ui-text);
+  --nova-text-muted: var(--ui-text-muted);
+  --nova-accent: var(--ui-accent);
+  --nova-accent-text: var(--ui-accent-text);
+  --nova-accent-bg: var(--ui-accent-bg);
+  --nova-success: var(--ui-success);
+  --nova-danger: var(--ui-danger);
+  --nova-error: var(--ui-error);
+  --nova-warning: var(--ui-warning);
+  --nova-info: var(--ui-info);
+  --nova-input-bg: var(--ui-input-bg);
+  --nova-hover-bg: var(--ui-hover-bg);
+  --nova-overlay: var(--ui-overlay);
+}
+
+/* ── Builder semantic tokens — elder (high-contrast, WCAG AA+) ────────────── */
+[data-theme="elder"] {
+  --ui-bg: #000000;
+  --ui-card: #0a0a1a;
+  --ui-surface: #0d0d20;
+  --ui-section-bg: rgba(255,255,255,0.05);
+  --ui-input-bg: rgba(255,255,255,0.10);
+  --ui-hover-bg: rgba(255,255,255,0.10);
+  --ui-card-hover: #111128;
+  --ui-border: rgba(255,255,255,0.25);
+  --ui-border-hover: rgba(255,255,255,0.45);
+  --ui-border-top: rgba(255,255,255,0.20);
+  --ui-border-bottom: rgba(255,255,255,0.20);
+  --ui-text: #ffffff;
+  --ui-text-dim: rgba(255,255,255,0.90);
+  --ui-text-muted: rgba(255,255,255,0.75);
+  --ui-text-selected: #ffffff;
+  --ui-accent: #9d5ff5;
+  --ui-accent-hover: #8b47e8;
+  --ui-accent-light: #c4b5fd;
+  --ui-accent-text: #ddd6fe;
+  --ui-accent-border: rgba(157,95,245,0.70);
+  --ui-accent-bg: rgba(157,95,245,0.28);
+  --ui-success: #34d399;
+  --ui-danger: #ff6b6b;
+  --ui-error: #ff4444;
+  --ui-warning: #fbbf24;
+  --ui-info: #93c5fd;
+  --ui-active-green: #6ee7b7;
+  --ui-active: rgba(157,95,245,0.22);
+  --ui-active-border: rgba(157,95,245,0.80);
+  --ui-active-text: #ddd6fe;
+  --ui-bg-selected: rgba(157,95,245,0.26);
+  --ui-bg-hover: rgba(255,255,255,0.10);
+  --ui-bg-multi-selected: rgba(157,95,245,0.18);
+  --ui-bg-drop-into: rgba(157,95,245,0.30);
+  --ui-bg-inactive: rgba(255,255,255,0.03);
+  --ui-drop-indicator: #9d5ff5;
+  --ui-tab-active: #ddd6fe;
+  --ui-tab-inactive: rgba(255,255,255,0.65);
+  --ui-pill: rgba(255,255,255,0.12);
+  --ui-pill-hover: rgba(255,255,255,0.20);
+  --ui-pill-border: rgba(255,255,255,0.18);
+  --ui-pill-text: #ffffff;
+  --ui-code-key: #bfdbfe;
+  --ui-code-val: #a7f3d0;
+  --ui-overlay: rgba(0,0,0,0.70);
+  --ui-muted: rgba(255,255,255,0.50);
+  --ui-input-border: rgba(255,255,255,0.20);
+  --ui-input: rgba(255,255,255,0.08);
+}
+
+/* ── Builder semantic tokens — light ─────────────────────────────────────── */
+[data-theme="light"] {
+  --ui-bg: #f8fafc;
+  --ui-card: #ffffff;
+  --ui-surface: #f1f5f9;
+  --ui-section-bg: rgba(0,0,0,0.03);
+  --ui-input-bg: rgba(0,0,0,0.04);
+  --ui-hover-bg: rgba(0,0,0,0.04);
+  --ui-card-hover: #f0f4ff;
+  --ui-border: rgba(0,0,0,0.10);
+  --ui-border-hover: rgba(0,0,0,0.18);
+  --ui-border-top: rgba(0,0,0,0.06);
+  --ui-border-bottom: rgba(0,0,0,0.06);
+  --ui-text: #0f172a;
+  --ui-text-dim: rgba(0,0,0,0.75);
+  --ui-text-muted: rgba(0,0,0,0.55);
+  --ui-text-selected: #0f172a;
+  --ui-accent: #6d28d9;
+  --ui-accent-hover: #5b21b6;
+  --ui-accent-light: #7c3aed;
+  --ui-accent-text: #5b21b6;
+  --ui-accent-border: rgba(109,40,217,0.40);
+  --ui-accent-bg: rgba(109,40,217,0.10);
+  --ui-success: #059669;
+  --ui-danger: #dc2626;
+  --ui-error: #dc2626;
+  --ui-warning: #d97706;
+  --ui-info: #2563eb;
+  --ui-active-green: #10b981;
+  --ui-active: rgba(109,40,217,0.12);
+  --ui-active-border: rgba(109,40,217,0.60);
+  --ui-active-text: #5b21b6;
+  --ui-bg-selected: rgba(109,40,217,0.12);
+  --ui-bg-hover: rgba(0,0,0,0.04);
+  --ui-bg-multi-selected: rgba(109,40,217,0.08);
+  --ui-bg-drop-into: rgba(109,40,217,0.16);
+  --ui-bg-inactive: rgba(0,0,0,0.02);
+  --ui-drop-indicator: #6d28d9;
+  --ui-tab-active: #5b21b6;
+  --ui-tab-inactive: rgba(0,0,0,0.45);
+  --ui-pill: rgba(0,0,0,0.06);
+  --ui-pill-hover: rgba(0,0,0,0.10);
+  --ui-pill-border: rgba(0,0,0,0.10);
+  --ui-pill-text: #0f172a;
+  --ui-code-key: #1d4ed8;
+  --ui-code-val: #047857;
+  --ui-overlay: rgba(0,0,0,0.40);
+  --ui-muted: rgba(0,0,0,0.35);
+  --ui-input-border: rgba(0,0,0,0.12);
+  --ui-input: rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* Visible focus ring for keyboard navigation — elder-first + WCAG 2.4.7 */
+:focus-visible {
+  outline: 2px solid var(--ui-accent, #7c3aed);
+  outline-offset: 2px;
+}
+
+/* Honour user motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

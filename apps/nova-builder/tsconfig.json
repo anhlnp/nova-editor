@@ -1,0 +1,54 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    // WS source packages are consumed as workspace sources via paths.
+    // Disable strict bundle and re-add only the flags that matter for our own code,
+    // since WS source files have TypeScript 5.8 inference issues (never[] for empty
+    // arrays, css-tree missing types) that we cannot patch in reference/ files.
+    "strict": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false,
+    "paths": {
+      "@/*": ["./src/*"],
+      // Third-party missing types
+      "css-tree": ["./src/stubs/css-tree.d.ts"],
+      // All @webstudio-is/* packages redirected to stubs.
+      // Runtime compilation still uses the workspace source via transpilePackages.
+      "@webstudio-is/sdk": ["./src/stubs/webstudio-sdk.d.ts"],
+      "@webstudio-is/sdk/runtime": ["./src/stubs/webstudio-sdk-runtime.d.ts"],
+      "@webstudio-is/sdk/core-templates": ["./src/stubs/webstudio-sdk-core-templates.d.ts"],
+      "@webstudio-is/sdk/normalize.css": ["./src/stubs/normalize-css.d.ts"],
+      "@webstudio-is/css-engine": ["./src/stubs/css-engine.d.ts"],
+      "@webstudio-is/css-data": ["./src/stubs/css-data.d.ts"],
+      "@webstudio-is/react-sdk": ["./src/stubs/webstudio-react-sdk.d.ts"],
+      "@webstudio-is/react-sdk/runtime": ["./src/stubs/webstudio-react-sdk-runtime.d.ts"],
+      "@webstudio-is/sdk-components-react": ["./src/stubs/webstudio-components.d.ts"],
+      "@webstudio-is/sdk-components-react/components": ["./src/stubs/webstudio-components.d.ts"],
+      "@webstudio-is/sdk-components-react/metas": ["./src/stubs/webstudio-components-metas.d.ts"],
+      "@webstudio-is/sdk-components-react/hooks": ["./src/stubs/webstudio-components-hooks.d.ts"],
+      "@webstudio-is/sdk-components-react/templates": ["./src/stubs/webstudio-components-templates.d.ts"],
+      "@webstudio-is/sdk-components-react-radix": ["./src/stubs/webstudio-radix-components.d.ts"],
+      "@webstudio-is/sdk-components-react-radix/metas": ["./src/stubs/webstudio-radix-metas.d.ts"],
+      "@webstudio-is/sdk-components-react-radix/hooks": ["./src/stubs/webstudio-components-hooks.d.ts"],
+      "@webstudio-is/sdk-components-react-radix/templates": ["./src/stubs/webstudio-radix-templates.d.ts"],
+      "@webstudio-is/sync-client": ["./src/stubs/webstudio-sync-client.d.ts"],
+      "@webstudio-is/image": ["./src/stubs/image.d.ts"],
+      "@webstudio-is/fonts": ["./src/stubs/webstudio-fonts.d.ts"],
+      "@webstudio-is/template": ["./src/stubs/webstudio-template.d.ts"],
+      // icons/svg is just string constants — safe to point to source
+      "@webstudio-is/icons/svg": ["../../reference/webstudio/packages/icons/src/__generated__/svg.ts"]
+    },
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "resolveJsonModule": true,
+    "jsx": "preserve"
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

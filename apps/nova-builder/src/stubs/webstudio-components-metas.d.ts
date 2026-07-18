@@ -1,0 +1,23 @@
+// Stub for @webstudio-is/sdk-components-react/metas
+export declare const Box: any;
+export declare const Button: any;
+export declare const Heading: any;
+export declare const Paragraph: any;
+export declare const Text: any;
+export declare const Image: any;
+export declare const Link: any;
+export declare const List: any;
+export declare const ListItem: any;
+export declare const Form: any;
+export declare const Input: any;
+export declare const Textarea: any;
+export declare const Label: any;
+export declare const Blockquote: any;
+export declare const Code: any;
+export declare const Slot: any;
+export declare const HtmlEmbed: any;
+export declare const ContentEmbed: any;
+export declare const Superscript: any;
+export declare const Subscript: any;
+export declare const Bold: any;
+export declare const Italic: any;

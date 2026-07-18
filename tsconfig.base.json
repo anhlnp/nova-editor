@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@studio/schema": ["packages/schema/src/index.ts"],
+      "@studio/registry": ["packages/registry/src/index.ts"],
+      "@studio/ai": ["packages/ai/src/index.ts"],
+      "@studio/git": ["packages/git/src/index.ts"],
+      "@studio/renderer": ["packages/renderer/src/index.ts"],
+      "@studio/editor": ["packages/editor/src/index.ts"],
+      "@studio/deploy": ["packages/deploy/src/index.ts"]
+    }
+  }
+}

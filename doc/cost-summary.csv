@@ -1,0 +1,83 @@
+Category,Sub-category,Item,Unit,Price (USD),Price (VND),Notes,Source
+SUBSCRIPTION TIERS,Free Tier,Nova Free Plan,/month,$0,0 VND,1 active project; 200 credits/month; 40 cr/day cap; no code export/deploy,pricing-policy.md §3
+SUBSCRIPTION TIERS,Pro Tier,Nova Pro Plan (Monthly),/month,$19,,4000 credits/month; unlimited projects; code export; Vercel deploy; 1 custom domain; email support,pricing-policy.md §3
+SUBSCRIPTION TIERS,Pro Tier,Nova Pro Plan (Annual),/year,$190,,"$15.83/mo effective — 2 months free ($19×12=$228 → save $38)",pricing-policy.md §3
+SUBSCRIPTION TIERS,Pro Tier,Nova Pro Plan (Vietnam - PayOS),/month,~$8,199.000 VND,PayOS VietQR; bank-transfer auto-confirm,store.md §4
+SUBSCRIPTION TIERS,Max Tier (planned),Nova Max Plan,/month,$49,,15000 credits/month; unlimited projects; 5 custom domains; white-label; priority email 48h,pricing-policy.md §3
+SUBSCRIPTION TIERS,Team Tier (planned),Nova Team Plan,/seat/month,$29,,min 3 seats; 5000 credits/seat (pooled); 5 domains/project; admin dashboard; onboarding support,pricing-policy.md §3
+SUBSCRIPTION TIERS,Team Tier (planned),Nova Team Plan (min 3 seats),/month,$87,,Minimum team: 3 × $29 = $87/mo,pricing-policy.md §3
+,,,,,,,,
+AI CREDITS - UNIT,Credit Value,1 credit = $0.002 USD,,  $0.002,,Anchored to most expensive provider (Anthropic); operator-facing currency,pricing-policy.md §2
+,,,,,,,,
+AI CREDITS - MONTHLY ALLOWANCE,Free Tier,Monthly credits,credits/month,200 cr,"≈ $0.40 cost","Free daily cap: 40 cr/day (~3 Claude ops or ~6 Gemini ops)",pricing-policy.md §3
+AI CREDITS - MONTHLY ALLOWANCE,Pro Tier,Monthly credits,credits/month,4000 cr,"≈ $8.00 cost","~333 Claude ops or ~666 Gemini ops per month; no daily cap",pricing-policy.md §3
+AI CREDITS - MONTHLY ALLOWANCE,Max Tier (planned),Monthly credits,credits/month,15000 cr,≈ $30.00 cost,,pricing-policy.md §3
+AI CREDITS - MONTHLY ALLOWANCE,Team Tier (planned),Monthly credits (per seat),credits/seat/month,5000 cr,≈ $10.00 cost/seat,Pooled across team,pricing-policy.md §3
+,,,,,,,,
+AI CREDITS - DAILY CAP,Free Tier,Daily soft-cap (monthly bucket),credits/day,40 cr,≈ $0.08/day,Only applies to monthly bucket spend; top-up credits bypass this cap,pricing-policy.md §3a
+AI CREDITS - DAILY CAP,Pro Tier,Daily soft-cap,credits/day,No cap (∞),,Paid tiers uncapped on daily spend,pricing-policy.md §3a
+AI CREDITS - DAILY CAP,Max Tier (planned),Daily soft-cap,credits/day,No cap (∞),,Paid tiers uncapped on daily spend,pricing-policy.md §3a
+AI CREDITS - DAILY CAP,Team Tier (planned),Daily soft-cap,credits/day,No cap (∞),,Paid tiers uncapped on daily spend,pricing-policy.md §3a
+,,,,,,,,
+AI CREDITS - TOP-UP PACKAGES,Boost Package,200 credits (prepaid),one-time,$0.50,,Variant-name token: '200'; expires 1 year after purchase; bypasses daily cap,pricing-policy.md §4
+AI CREDITS - TOP-UP PACKAGES,Standard Package,1000 credits (prepaid),one-time,$2.00,,Variant-name token: '1000'; expires 1 year after purchase; bypasses daily cap,pricing-policy.md §4
+AI CREDITS - TOP-UP PACKAGES,Power Package,4000 credits (prepaid),one-time,$7.00,,Variant-name token: '4000'; expires 1 year after purchase; bypasses daily cap,pricing-policy.md §4
+,,,,,,,,
+AI COST PER OPERATION - ANTHROPIC,Anthropic (Haiku 4.5 + Sonnet 4.6),Planner: Claude Haiku 4.5,per 1M tokens,$0.80 in / $4 out,,Token budget: 2000 in / 300 out per op,pricing-policy.md §2 table
+AI COST PER OPERATION - ANTHROPIC,Anthropic (Haiku 4.5 + Sonnet 4.6),Patcher: Claude Sonnet 4.6,per 1M tokens,$3 in / $15 out,,Token budget: 4000 in / 600 out per op,pricing-policy.md §2 table
+AI COST PER OPERATION - ANTHROPIC,Anthropic (Haiku 4.5 + Sonnet 4.6),Full Operation Cost (planner + patcher),per op,~$0.024,,= 12 credits/op,pricing-policy.md §2 table
+AI COST PER OPERATION - ANTHROPIC,Anthropic (Haiku 4.5 + Sonnet 4.6),Credits per operation,credits/op,12 cr (= $0.024),,Charged only on successful parse; failed ops cost 0 (ADR-006),pricing-policy.md §2 table
+AI COST PER OPERATION - ANTHROPIC,Premium: Claude Opus 4.8 (optional),Patcher: Claude Opus 4.8,per 1M tokens,$15 in / $75 out,,"~$0.06/op → ~30 credits; 'max quality' toggle for Pro+, not default",pricing-policy.md §2
+,,,,,,,,
+AI COST PER OPERATION - OPENAI,OpenAI (GPT-4o-mini + GPT-4o),Planner: GPT-4o-mini,per 1M tokens,$0.15 in / $0.60 out,,Token budget: 2000 in / 300 out per op,pricing-policy.md §2 table
+AI COST PER OPERATION - OPENAI,OpenAI (GPT-4o-mini + GPT-4o),Patcher: GPT-4o,per 1M tokens,$2.50 in / $10 out,,Token budget: 4000 in / 600 out per op,pricing-policy.md §2 table
+AI COST PER OPERATION - OPENAI,OpenAI (GPT-4o-mini + GPT-4o),Full Operation Cost (planner + patcher),per op,~$0.017,,= 8 credits/op,pricing-policy.md §2 table
+AI COST PER OPERATION - OPENAI,OpenAI (GPT-4o-mini + GPT-4o),Credits per operation,credits/op,8 cr (= $0.016),,Charged only on successful parse,pricing-policy.md §2 table
+,,,,,,,,
+AI COST PER OPERATION - GOOGLE,Google (Gemini 2.5 Flash + 2.5 Pro),Planner: Gemini 2.5 Flash,per 1M tokens,$0.075 in / $0.30 out,,Token budget: 2000 in / 300 out per op,pricing-policy.md §2 table
+AI COST PER OPERATION - GOOGLE,Google (Gemini 2.5 Flash + 2.5 Pro),Patcher: Gemini 2.5 Pro,per 1M tokens,$1.25 in / $10 out,,Token budget: 4000 in / 600 out per op,pricing-policy.md §2 table
+AI COST PER OPERATION - GOOGLE,Google (Gemini 2.5 Flash + 2.5 Pro),Full Operation Cost (planner + patcher),per op,~$0.011,,= 6 credits/op,pricing-policy.md §2 table
+AI COST PER OPERATION - GOOGLE,Google (Gemini 2.5 Flash + 2.5 Pro),Credits per operation,credits/op,6 cr (= $0.012),,Charged only on successful parse,pricing-policy.md §2 table
+,,,,,,,,
+AI COST PER OPERATION - FREE PROVIDERS,Free Providers (dev/testing only),Groq / OpenRouter (:free) / Mistral,per op,~$0 (operator cost),,Credit cost = 1 (drives rate limiter only); not for production end-users,pricing-policy.md §2
+AI COST PER OPERATION - FREE PROVIDERS,Free Providers (dev/testing only),Credits per operation (free providers),credits/op,1 cr (= $0.002),,"Arbitrary — only purpose is driving shared per-minute rate limiter",pricing-policy.md §2
+,,,,,,,,
+OPERATOR ECONOMICS,Unit Economics,Free user worst-case AI cost (100% Anthropic),/active user/month,$0.40,,200 cr ÷ 12 cr/op × $0.024/op = $0.40/mo,pricing-policy.md §3
+OPERATOR ECONOMICS,Unit Economics,Pro user worst-case AI cost (100% Anthropic),/user/month,$8.00,,4000 cr ÷ 12 × $0.024 = $8; revenue $19 → ~$11 gross headroom,pricing-policy.md §3
+OPERATOR ECONOMICS,Unit Economics,Pro user gross headroom (worst case),/user/month,$11.00,,$19 revenue − $8 AI cost = $11 (before infra),pricing-policy.md §3
+OPERATOR ECONOMICS,Unit Economics,Real-world AI cost (mixed/free providers),/user/month,< $8.00,,Typical well under worst-case due to free providers,pricing-policy.md §3
+,,,,,,,,
+PAYMENT PROCESSORS,Lemon Squeezy (Global),Merchant of Record (handles VAT/tax),global,MoR fees apply,,Pro subscriptions + one-time top-up products; USD/EUR; handles tax globally,pricing-policy.md §6 / store.md
+PAYMENT PROCESSORS,PayOS (Vietnam),VietQR bank transfer payments,Vietnam,PayOS fees apply,,Auto bank-transfer confirmation via webhook; VND transactions,pricing-policy.md §6 / store.md
+,,,,,,,,
+FEATURES BY TIER,Free,$0/mo,Active Projects,1 project,,Limit triggers upgrade prompt on 2nd project,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,Visual Editor (all blocks/pages),Included,,Full editor access on free,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,GitHub sync (project.json),Included,,,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,.tsx Code Export,Not included,,Pro feature,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,Vercel Auto-Deploy,Not included,,Pro feature,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,Custom Domain,Not included,,Pro: 1 domain,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,Premium Templates,Preview only,,Pro gets full access,pricing-policy.md §3
+FEATURES BY TIER,Free,$0/mo,Support,Community,,Pro gets email support,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,Active Projects,Unlimited,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,Visual Editor (all blocks/pages),Included,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,GitHub sync (project.json),Included,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,.tsx Code Export,Included,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,Vercel Auto-Deploy,Included,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,Custom Domain,1 domain,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,Premium Templates,Full access,,,pricing-policy.md §3
+FEATURES BY TIER,Pro,$19/mo,Support,Email,,,pricing-policy.md §3
+FEATURES BY TIER,Max (planned),$49/mo,Custom Domains,5 domains,,,pricing-policy.md §3
+FEATURES BY TIER,Max (planned),$49/mo,White-label (remove 'Powered by Nova'),Included,,,pricing-policy.md §3
+FEATURES BY TIER,Max (planned),$49/mo,Support,Priority email (48h),,,pricing-policy.md §3
+FEATURES BY TIER,Team (planned),$29/seat/mo,Custom Domains,5 per project,,,pricing-policy.md §3
+FEATURES BY TIER,Team (planned),$29/seat/mo,White-label,Included,,,pricing-policy.md §3
+FEATURES BY TIER,Team (planned),$29/seat/mo,Admin Dashboard (usage + audit),Included,,,pricing-policy.md §3
+FEATURES BY TIER,Team (planned),$29/seat/mo,SSO / SAML,v2.x roadmap,,,pricing-policy.md §3
+FEATURES BY TIER,Team (planned),$29/seat/mo,Support,Priority + onboarding,,,pricing-policy.md §3
+,,,,,,,,
+UPGRADE TRIGGERS,Contextual UX,2nd project creation,Trigger,Free → upgrade prompt,,'"Free plan: 1 active project. Upgrade to Pro for unlimited."',pricing-policy.md §5
+UPGRADE TRIGGERS,Contextual UX,Monthly credits hit 0,Trigger,Upgrade / top-up / switch to free model,,Prompt to upgrade or buy top-up,pricing-policy.md §5
+UPGRADE TRIGGERS,Contextual UX,Free daily cap hit (§3a),Trigger,Top-up or wait until tomorrow,,'"Buy a top-up to keep going, or come back tomorrow."',pricing-policy.md §5
+UPGRADE TRIGGERS,Contextual UX,Credits ≤ 2× op cost,Trigger,Amber credit counter,,Visual warning in credit counter,pricing-policy.md §5
+UPGRADE TRIGGERS,Contextual UX,Click Publish (Free user),Trigger,Upgrade prompt for .tsx + auto-deploy,,'"Saved to GitHub ✓ — export .tsx + auto-deploy with Pro."',pricing-policy.md §5
+UPGRADE TRIGGERS,Contextual UX,Click PRO template/block,Trigger,Upgrade prompt,,'"Upgrade to use this."',pricing-policy.md §5

@@ -1,0 +1,27 @@
+{
+  "name": "nova-editor",
+  "version": "3.2.1",
+  "private": true,
+  "description": "AI-powered visual editor that writes React code and syncs it to GitHub",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "solid:audit": "node scripts/solid-audit.mjs",
+    "test:e2e": "playwright test",
+    "cf:secrets": "node scripts/cf-push-secrets.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.61.1",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.1.2"
+  },
+  "packageManager": "pnpm@8.15.9",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

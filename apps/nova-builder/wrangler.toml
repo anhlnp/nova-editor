@@ -1,0 +1,14 @@
+name = "nova-editor"
+main = ".open-next/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# OpenNext Cloudflare 1.x serves static assets (client JS chunks, images) through
+# the ASSETS binding — the worker template calls `env.ASSETS.fetch(...)`. The old
+# `[site]` (Workers Sites KV) config does NOT provide `env.ASSETS`, so on a
+# deployed Worker `/_next/static/*.js` never loads → the client never hydrates →
+# the app renders (inline-styled shells) but nothing interactive works (demo
+# stuck on "Loading project…", language switcher can't switch, etc.).
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"

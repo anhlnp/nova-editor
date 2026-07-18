@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -ln \"editorCommands\")",
+      "Bash(pnpm --filter @studio/schema typecheck)",
+      "Bash(pnpm --filter @studio/schema test --run)",
+      "Bash(pnpm --filter \"@studio/*\" test)",
+      "Bash(grep -v \"^$\")",
+      "PowerShell(pnpm --filter @studio/registry typecheck 2>&1)",
+      "PowerShell(pnpm --filter @studio/app typecheck 2>&1)",
+      "PowerShell(pnpm test 2>&1)",
+      "PowerShell(pnpm --filter @studio/schema test 2>&1)",
+      "PowerShell(pnpm --filter @studio/git test 2>&1)",
+      "PowerShell(pnpm --filter @studio/renderer test 2>&1)",
+      "PowerShell(pnpm --filter @studio/editor test 2>&1)",
+      "PowerShell(pnpm --filter @studio/registry test 2>&1)",
+      "PowerShell(pnpm --filter @studio/editor typecheck 2>&1)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/editor test 2>&1 | Select-Object -Last 15)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/editor exec tsc --noEmit 2>&1 | Select-Object -Last 15; \"EXIT=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/app exec tsc --noEmit 2>&1 | Select-Object -Last 15; \"EXIT=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/renderer test 2>&1 | Select-Object -Last 18)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/app exec tsc --noEmit 2>&1 | Select-Object -Last 12; \"APP_EXIT=$LASTEXITCODE\"; pnpm --filter @studio/renderer exec tsc --noEmit 2>&1 | Select-Object -Last 12; \"RENDERER_EXIT=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/app exec tsc --noEmit 2>&1 | Select-Object -Last 15; \"APP_EXIT=$LASTEXITCODE\")",
+      "Bash(git mv *)",
+      "Bash(mv doc/prd.md doc/prd-v1.1.md doc/prd-v1.2.md doc/prd-v1.3.md doc/prd-v1.4.md doc/archive/)",
+      "Bash(echo \"exit=$?\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/registry test 2>&1 | Select-Object -Last 8; pnpm --filter @studio/renderer test 2>&1 | Select-Object -Last 8; pnpm --filter @studio/editor test 2>&1 | Select-Object -Last 8)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/renderer test 2>&1 | Select-Object -Last 10; \"RENDERER_EXIT=$LASTEXITCODE\"; pnpm --filter @studio/app exec tsc --noEmit 2>&1 | Select-Object -Last 5; \"APP_EXIT=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/registry exec tsc --noEmit 2>&1 | Select-Object -Last 20; \"REG_EXIT=$LASTEXITCODE\"; pnpm --filter @studio/editor exec tsc --noEmit 2>&1 | Select-Object -Last 20; \"ED_EXIT=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/registry test 2>&1 | Select-Object -Last 6; pnpm --filter @studio/editor test 2>&1 | Select-Object -Last 6)",
+      "Bash(node packages/renderer/src/blocks/generateSources.mjs --emit)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/renderer exec tsc --noEmit 2>&1 | Select-Object -Last 20; \"REN_TC=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/renderer test 2>&1 | Select-Object -Last 22)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/app exec tsc --noEmit 2>&1 | Select-Object -Last 20; \"APP=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/schema test 2>&1 | Select-Object -Last 6; pnpm --filter @studio/registry exec tsc --noEmit 2>&1 | Select-Object -Last 6; \"REG_TC=$LASTEXITCODE\"; pnpm --filter @studio/registry test 2>&1 | Select-Object -Last 6)",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/editor test 2>&1 | Select-Object -Last 5; pnpm --filter @studio/renderer test 2>&1 | Select-Object -Last 5; pnpm --filter @studio/git test 2>&1 | Select-Object -Last 5; pnpm --filter @studio/app exec tsc --noEmit 2>&1 | Select-Object -Last 6; \"APP=$LASTEXITCODE\")",
+      "PowerShell($env:NODE_OPTIONS=\"--max-old-space-size=4096\"; pnpm --filter @studio/schema test 2>&1 | Select-Object -Last 6; pnpm --filter @studio/registry exec tsc --noEmit 2>&1 | Select-Object -Last 8; \"REG_TC=$LASTEXITCODE\"; pnpm --filter @studio/registry test 2>&1 | Select-Object -Last 6)"
+    ]
+  }
+}
