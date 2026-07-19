@@ -33,7 +33,7 @@ import {
 import {
   $selectedBreakpoint, $aiPanelOpen, $aiInitialPrompt, $canvasZoom, $gridGuidesVisible,
   $selectedInstanceSelector, $pendingCanvasMsg,
-  $cssVars, $interactions, $customCss, $isDirty, $saveTriggerCount,
+  $cssVars, $interactions, $customCss, $isDirty, $saveTriggerCount, $importKey,
 } from "@/lib/nano-states";
 import { $symbols } from "@/lib/symbols";
 import { updateData, replaceMap } from "@/lib/transactions";
@@ -78,6 +78,8 @@ export default function BuilderPage() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [canvasCtxMenu, setCanvasCtxMenu] = useState<{ instanceId: string; x: number; y: number } | null>(null);
   const [textEditingInstanceId, setTextEditingInstanceId] = useState<string | null>(null);
+  // canvasKey: bumped after a project import to reload the iframe and re-inject emitter
+  const [canvasKey, setCanvasKey] = useState(0);
 
   const selectedBreakpoint = useStore($selectedBreakpoint);
   const canvasZoom = useStore($canvasZoom);
@@ -151,6 +153,14 @@ export default function BuilderPage() {
   useEffect(() => {
     if (loadState === "ready") injectEmitter();
   }, [loadState, injectEmitter]);
+
+  // When a project is imported, $importKey increments — reload the canvas iframe
+  // so it remounts cleanly and receives the new atom state via emitter injection.
+  useEffect(() => {
+    return $importKey.subscribe((key) => {
+      if (key > 0) setCanvasKey(key);
+    });
+  }, []);
 
   // Forward pending canvas messages from builder components (e.g. PropsEditorPanel)
   // that can't hold a ref to the iframe directly.
@@ -429,8 +439,9 @@ export default function BuilderPage() {
             }}
           >
             <iframe
+              key={canvasKey}
               ref={iframeRef}
-              src="/canvas"
+              src={canvasKey > 0 ? `/canvas?v=${canvasKey}` : "/canvas"}
               onLoad={onIframeLoad}
               style={{
                 // Explicit pixel height so the scale wrapper has known dimensions.

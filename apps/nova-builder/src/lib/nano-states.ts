@@ -255,3 +255,8 @@ export const $toast = atom<ToastMessage | null>(null);
 export function showToast(text: string, type: "success" | "error" | "warning" = "success") {
   $toast.set({ type, text });
 }
+
+// ─── Import trigger ──────────────────────────────────────────────────────────
+// Incrementing this value causes the builder page to reload the canvas iframe
+// with fresh data after a project import.
+export const $importKey = atom<number>(0);

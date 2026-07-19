@@ -105,6 +105,8 @@ export const viDictionary: I18nDictionary = {
     exportReact: "↓ Xuất React (.tsx)",
     export: "Xuất ▾",
     deploy: "Triển khai ↗",
+    exportProject: "Xuất dự án (.nova)",
+    importProject: "Nhập dự án (.nova)",
     publish: "Xuất bản ↗",
     preview: "Xem trước",
     exitPreview: "Thoát xem trước",

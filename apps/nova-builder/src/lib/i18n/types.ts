@@ -98,6 +98,8 @@ export interface I18nBuilderDictionary {
   exportReact: string;
   export: string;
   deploy: string;
+  exportProject: string;
+  importProject: string;
   publish: string;
   preview: string;
   exitPreview: string;
