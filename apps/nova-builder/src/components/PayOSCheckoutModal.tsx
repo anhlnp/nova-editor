@@ -99,7 +99,7 @@ export default function PayOSCheckoutModal({ isOpen, onClose, tier, teamId }: Pa
     
     pollingRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/billing/payos/status?orderCode=${orderCode}`);
+        const res = await fetch(`/api/billing/payos/status?orderCode=${orderCode}&plan=${tier}&teamId=${teamId || ""}`);
         const data = await res.json();
         if (data.paid) {
           if (pollingRef.current) clearInterval(pollingRef.current);
