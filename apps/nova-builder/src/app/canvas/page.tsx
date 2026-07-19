@@ -122,19 +122,20 @@ export default function CanvasPage() {
     }
   }, []);
 
+  // Build className after hydration to avoid SSR/client mismatch.
+  // On the server, isPreview and theme are not yet resolved from the URL,
+  // so we start with a minimal class list that matches both branches.
+  const className = isPreview
+    ? "min-h-screen relative"
+    : `${theme} text-foreground bg-background min-h-screen relative`;
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: canvasStyles }} />
-      {isPreview ? (
-        <div className="min-h-screen relative">
-          <CanvasClient />
-        </div>
-      ) : (
-        <div className={`${theme} text-foreground bg-background min-h-screen relative`}>
-          <CanvasClient />
-          <DiagnosticsOverlay />
-        </div>
-      )}
+      <div className={className} suppressHydrationWarning>
+        <CanvasClient />
+        {!isPreview && <DiagnosticsOverlay />}
+      </div>
     </>
   );
 }
