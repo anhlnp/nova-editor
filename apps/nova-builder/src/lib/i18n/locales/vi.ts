@@ -4,6 +4,7 @@ export const viDictionary: I18nDictionary = {
   nav: {
     features: "Tính năng",
     templates: "Giao diện mẫu",
+    tryDemo: "Thử Demo",
     pricing: "Bảng giá",
     docs: "Tài liệu",
     login: "Đăng nhập",

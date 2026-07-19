@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { LogoIcon } from "@/components/LogoIcon";
@@ -12,33 +12,13 @@ interface PublicNavProps {
   theme?: "light" | "dark";
 }
 
-/* ── Origin-style dropdown items ── */
-const PRODUCT_LINKS = [
-  { href: "/features", label: "Features" },
-  { href: "/templates", label: "Templates" },
-  { href: "/builder/demo", label: "Live Demo" },
-];
-
 export function PublicNav({ theme = "light" }: PublicNavProps) {
   const { t } = useI18n();
   const { data: session, status } = useSession();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isLoggedIn = status === "authenticated" && session;
   const isDark = theme === "dark";
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   if (!isDark) {
     // Light theme — keep simple original style
@@ -87,31 +67,7 @@ export function PublicNav({ theme = "light" }: PublicNavProps) {
           {/* ── Center: Nav links ── */}
           <div className="on-navbar__center">
             <div className="on-nav-menu">
-              {/* Products dropdown */}
-              <div className="on-nav-dropdown" ref={dropdownRef}>
-                <button
-                  className="on-nav-link on-nav-dropdown-toggle"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  aria-expanded={dropdownOpen}
-                >
-                  <span>{t.nav.features}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 17" fill="none" className="on-nav-dropdown-icon" style={{ transform: dropdownOpen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-                    <path d="M14 8.5C14 8.63261 13.9473 8.75979 13.8536 8.85355C13.7598 8.94732 13.6326 9 13.5 9H8.5V14C8.5 14.1326 8.44732 14.2598 8.35355 14.3536C8.25979 14.4473 8.13261 14.5 8 14.5C7.86739 14.5 7.74021 14.4473 7.64645 14.3536C7.55268 14.2598 7.5 14.1326 7.5 14V9H2.5C2.36739 9 2.24021 8.94732 2.14645 8.85355C2.05268 8.75979 2 8.63261 2 8.5C2 8.36739 2.05268 8.24021 2.14645 8.14645C2.24021 8.05268 2.36739 8 2.5 8H7.5V3C7.5 2.86739 7.55268 2.74021 7.64645 2.64645C7.74021 2.55268 7.86739 2.5 8 2.5C8.13261 2.5 8.25979 2.55268 8.35355 2.64645C8.44732 2.74021 8.5 2.86739 8.5 3V8H13.5C13.6326 8 13.7598 8.05268 13.8536 8.14645C13.9473 8.24021 14 8.36739 14 8.5Z" fill="currentColor" />
-                  </svg>
-                </button>
-                {dropdownOpen && (
-                  <div className="on-nav-dropdown-list-wrapper">
-                    <div className="on-nav-dropdown-list">
-                      {PRODUCT_LINKS.map((link) => (
-                        <Link key={link.href} href={link.href} className="on-nav-dropdown-link" onClick={() => setDropdownOpen(false)}>
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
+              <Link href="/builder/demo" className="on-nav-link">{t.nav.tryDemo}</Link>
               <Link href="/pricing" className="on-nav-link">{t.nav.pricing}</Link>
               <Link href="/docs" className="on-nav-link">{t.nav.docs}</Link>
 
@@ -149,9 +105,7 @@ export function PublicNav({ theme = "light" }: PublicNavProps) {
       {/* ── Mobile menu overlay ── */}
       {mobileOpen && (
         <div className="on-mobile-menu">
-          {PRODUCT_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="on-mobile-link" onClick={() => setMobileOpen(false)}>{link.label}</Link>
-          ))}
+          <Link href="/builder/demo" className="on-mobile-link" onClick={() => setMobileOpen(false)}>{t.nav.tryDemo}</Link>
           <Link href="/pricing" className="on-mobile-link" onClick={() => setMobileOpen(false)}>{t.nav.pricing}</Link>
           <Link href="/docs" className="on-mobile-link" onClick={() => setMobileOpen(false)}>{t.nav.docs}</Link>
           {isLoggedIn ? (

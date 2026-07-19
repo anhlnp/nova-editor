@@ -8,6 +8,7 @@ export type Locale = "en" | "vi";
 export interface I18nNavDictionary {
   features: string;
   templates: string;
+  tryDemo: string;
   pricing: string;
   docs: string;
   login: string;

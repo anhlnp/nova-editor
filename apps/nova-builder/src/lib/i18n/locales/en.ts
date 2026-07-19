@@ -4,6 +4,7 @@ export const enDictionary: I18nDictionary = {
   nav: {
     features: "Features",
     templates: "Templates",
+    tryDemo: "Try Demo",
     pricing: "Pricing",
     docs: "Docs",
     login: "Log in",
