@@ -59,6 +59,7 @@ export async function GET(req: Request) {
           code?: string;
           data?: {
             status?: string;
+            amount?: number;
             items?: Array<{ name?: string }>;
           };
         };
@@ -92,6 +93,9 @@ export async function GET(req: Request) {
               provider: "payos",
               kind: plan === "credits" ? "credits" : "plan",
               user_id: itemUserId || userId || null,
+              amount: json.data?.amount || 10000,
+              plan: plan,
+              status: "success"
             });
             if (!claimError) {
               console.log(`[PayOS Status Check] Database claimed orderCode ${orderCode} successfully. Updating subscription...`);

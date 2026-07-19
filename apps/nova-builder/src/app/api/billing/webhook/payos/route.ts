@@ -76,6 +76,9 @@ export async function POST(req: Request) {
     provider: "payos",
     kind: plan === "credits" ? "credits" : "plan",
     user_id: userId || null,
+    amount: body.data?.amount || 10000,
+    plan: plan,
+    status: "success"
   });
   if (claimError) {
     // Unique-violation (23505) = already processed → safe no-op replay.

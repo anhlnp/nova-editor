@@ -138,12 +138,33 @@ export default function SubscriptionPage() {
   return (
     <div style={{ background: C.bg, minHeight: "100vh", padding: "28px 32px", fontFamily: C.font, color: C.text }}>
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-          <button onClick={() => router.push("/projects")}
-            style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 18 }}>
-            ←
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => router.push("/projects")}
+              style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 18 }}>
+              ←
+            </button>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Subscription</h1>
+          </div>
+          <button
+            onClick={() => router.push("/settings/subscription/history")}
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: `1px solid ${C.border || "rgba(255,255,255,0.08)"}`,
+              color: C.text,
+              cursor: "pointer",
+              fontSize: FONT.sm,
+              padding: "6px 12px",
+              borderRadius: 6,
+              fontWeight: 600,
+              fontFamily: "inherit",
+              transition: "border-color 0.2s",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = C.accent || "#7c3aed"}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = C.border || "rgba(255,255,255,0.08)"}
+          >
+            Lịch sử giao dịch
           </button>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Subscription</h1>
         </div>
 
         {loading && <div style={{ color: C.textMuted, fontSize: FONT.sm }}>Loading…</div>}
