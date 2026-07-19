@@ -122,23 +122,30 @@ function cssStringToStyleValue(css: string): StyleValue {
   return { type: "keyword", value: trimmed };
 }
 
-// ─── Known components ─────────────────────────────────────────────────────────
+// ─── Known components and mappings ───────────────────────────────────────────
 
-const KNOWN_COMPONENTS = new Set([
-  "Box",
-  "Heading",
-  "Paragraph",
-  "Bold",
-  "Italic",
-  "Link",
-  "Button",
-  "Image",
-  "Input",
-  "Label",
-  "Form",
-  "List",
-  "ListItem",
-]);
+const COMPONENT_MAPPING: Record<string, string> = {
+  Box: "Box",
+  Heading: "Heading",
+  Paragraph: "Paragraph",
+  Bold: "Bold",
+  Italic: "Italic",
+  Link: "Link",
+  Button: "shadcn:Button",
+  Image: "Image",
+  Input: "shadcn:Input",
+  Label: "Label",
+  Form: "Form",
+  List: "List",
+  ListItem: "ListItem",
+  Card: "shadcn:Card",
+  Badge: "shadcn:Badge",
+  Switch: "shadcn:Switch",
+  Checkbox: "shadcn:Checkbox",
+  Avatar: "shadcn:Avatar",
+};
+
+const KNOWN_COMPONENTS = new Set(Object.keys(COMPONENT_MAPPING));
 
 // ─── Main converter ───────────────────────────────────────────────────────────
 
@@ -182,11 +189,12 @@ export function validateCompositionWS(raw: unknown): WSCompositionResult {
     for (const node of nodes) {
       if (!node || typeof node !== "object" || Array.isArray(node)) continue;
       const n = node as AINode;
-      const component = typeof n.component === "string" ? n.component : "";
-      if (!KNOWN_COMPONENTS.has(component)) {
-        if (component) droppedComponents.add(component);
+      const rawComponent = typeof n.component === "string" ? n.component : "";
+      if (!KNOWN_COMPONENTS.has(rawComponent)) {
+        if (rawComponent) droppedComponents.add(rawComponent);
         continue;
       }
+      const component = COMPONENT_MAPPING[rawComponent]!;
 
       const aiId = typeof n.id === "string" ? n.id : "";
       const instanceId = idMap.get(aiId) ?? genId("inst_");
@@ -207,7 +215,7 @@ export function validateCompositionWS(raw: unknown): WSCompositionResult {
         type: "instance",
         id: instanceId,
         component,
-        label: typeof n.label === "string" ? n.label : component,
+        label: typeof n.label === "string" ? n.label : rawComponent,
         children: childRefs,
       };
       instances.push(instance);

@@ -26,7 +26,7 @@ HARD RULES — violating any makes your output invalid:
    - "props":     an object of props specific to this component (see docs)
    - "styles":    an object of CSS property → CSS value string pairs
    - "children":  an array of child node objects (empty [] for leaf nodes)
-   - "text":      (for Heading/Paragraph/Bold/Italic/Link/Button only) the visible text
+   - "text":      (for Heading/Paragraph/Bold/Italic/Link/Button/Badge/Checkbox/Label only) the visible text
 
 5. IDs must be unique across the entire output. Use 8 random alphanumeric chars.
 
@@ -36,14 +36,19 @@ HARD RULES — violating any makes your output invalid:
 AVAILABLE COMPONENTS:
 ═══════════════════════════════════════
 Box       — Generic container. props: tag ("div"|"section"|"nav"|"header"|"footer"|"main"|"article"|"aside"|"ul"|"ol"|"li")
+Card      — Modern card wrapper with border, shadow, and background. Perfect for feature cards, pricing items, testimonies.
+Badge     — Small pill-shaped tag for labels, statuses, or highlights. Requires "text". props: variant ("default"|"secondary"|"destructive"|"outline")
 Heading   — Heading text.     props: tag ("h1"|"h2"|"h3"|"h4"|"h5"|"h6"). Requires "text".
 Paragraph — Paragraph text.   Requires "text". No extra props.
 Bold      — Inline bold text. Requires "text". Use inside Paragraph or Heading.
 Italic    — Inline italic.    Requires "text". Use inside Paragraph.
 Link      — Anchor element.   props: href (string). Requires "text".
-Button    — Button element.   props: type ("button"|"submit"). Requires "text".
+Button    — Button element.   props: type ("button"|"submit"), variant ("default"|"secondary"|"destructive"|"outline"|"ghost"|"link"), size ("default"|"sm"|"lg"|"icon"). Requires "text".
 Image     — Image element.    props: src (string, use placeholder URL), alt (string), width (number), height (number).
 Input     — Form input.       props: type ("text"|"email"|"password"|"number"|"tel"|"url"|"search"), placeholder (string), name (string).
+Switch    — Toggle switch element for options or settings. props: isChecked (boolean).
+Checkbox  — Checkbox element with a label. props: isChecked (boolean). Requires "text".
+Avatar    — Circular avatar showing an image or user initials. props: src (string), name (string).
 Label     — Form label.       props: for (string). Requires "text".
 Form      — Form wrapper.     props: action (string), method ("get"|"post").
 List      — ul/ol list.       props: ordered (boolean).
@@ -88,12 +93,19 @@ HOW TO BUILD A GOOD PAGE:
   correct heading hierarchy (h1 for the main title, h2 for sections, h3 for cards).
 - Hero: large h1, a subheading Paragraph, and a Button CTA.
 - Feature cards: a Box (display: flex, flexWrap: wrap, gap: 32px) containing
-  several Box items each with an h3 Heading and Paragraph description.
+  several Card items each with a Badge, an h3 Heading and Paragraph description.
 - Colors: use a palette that matches the brand. Dark SaaS tools: dark background
   (#0f172a) with blue/violet accents. Consumer brands: warm, light palette.
+- Aesthetic Guidelines:
+  * Buttons: Use shadcn Button component. Give it nice padding, borderRadius (e.g. "8px"), border: "none". For primary CTA, use a bold gradient like background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)", color: "#ffffff".
+  * Cards: Use Card components for card elements. Add padding (e.g. "24px"), gap (e.g. "16px"), border: "1px solid rgba(226, 232, 240, 0.8)", and smooth shadows (boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)").
+  * Badges: Use Badge components for labels (e.g. "New", "Feature", "Popular") above headings or card titles.
+  * Inputs: Use Input components with placeholder text, border: "1px solid #e2e8f0", padding: "10px 14px", height: "42px".
+  * Typography: Large headings (48px - 60px) for H1 with tight lineHeight (1.1). Under H1, use Paragraph with slate-400 (#94a3b8) or slate-500 (#64748b) text and line-height 1.6.
+  * Grid/Flex: Align elements beautifully using display: "flex", flex-direction, gap, and align-items. Never allow layouts to stack messy. Use max-width "1200px" and margin "0 auto" to center main content blocks.
 
 ═══════════════════════════════════════
-OUTPUT FORMAT EXAMPLE (shape only — use real content for the actual request):
+OUTPUT FORMAT EXAMPLE (a beautiful, complete webpage structure):
 ═══════════════════════════════════════
 {
   "tree": [
@@ -101,13 +113,14 @@ OUTPUT FORMAT EXAMPLE (shape only — use real content for the actual request):
       "id": "Nv1Ba2cd",
       "component": "Box",
       "label": "Navbar",
-      "props": { "tag": "nav" },
+      "props": { "tag": "header" },
       "styles": {
         "display": "flex",
         "justifyContent": "space-between",
         "alignItems": "center",
-        "padding": "16px 32px",
-        "backgroundColor": "#0f172a"
+        "padding": "20px 48px",
+        "backgroundColor": "#0f172a",
+        "borderBottom": "1px solid rgba(255, 255, 255, 0.05)"
       },
       "children": [
         {
@@ -115,24 +128,22 @@ OUTPUT FORMAT EXAMPLE (shape only — use real content for the actual request):
           "component": "Heading",
           "label": "Logo",
           "props": { "tag": "h1" },
-          "styles": { "fontSize": "20px", "color": "#ffffff", "fontWeight": "700" },
-          "text": "Acme",
+          "styles": { "fontSize": "22px", "color": "#ffffff", "fontWeight": "800", "letterSpacing": "-0.5px" },
+          "text": "Nova SaaS",
           "children": []
         },
         {
           "id": "Bt5cD6ef",
           "component": "Button",
           "label": "CTA Button",
-          "props": { "type": "button" },
+          "props": { "type": "button", "variant": "secondary", "size": "sm" },
           "styles": {
-            "padding": "8px 20px",
-            "backgroundColor": "#3b82f6",
-            "color": "#ffffff",
-            "borderRadius": "6px",
+            "padding": "8px 16px",
+            "borderRadius": "8px",
             "border": "none",
             "cursor": "pointer"
           },
-          "text": "Get started",
+          "text": "Sign In",
           "children": []
         }
       ]
@@ -140,34 +151,170 @@ OUTPUT FORMAT EXAMPLE (shape only — use real content for the actual request):
     {
       "id": "He7fG8hi",
       "component": "Box",
-      "label": "Hero",
+      "label": "Hero Section",
       "props": { "tag": "section" },
       "styles": {
         "display": "flex",
         "flexDirection": "column",
         "alignItems": "center",
         "textAlign": "center",
-        "padding": "120px 32px",
-        "backgroundColor": "#0f172a"
+        "padding": "100px 24px",
+        "backgroundColor": "#0f172a",
+        "color": "#ffffff"
       },
       "children": [
+        {
+          "id": "Bd1gH2jk",
+          "component": "Badge",
+          "label": "Release Badge",
+          "props": { "variant": "secondary" },
+          "styles": {
+            "marginBottom": "16px",
+            "padding": "4px 12px",
+            "fontSize": "12px"
+          },
+          "text": "✨ Version 2.0 is now live",
+          "children": []
+        },
         {
           "id": "H1i9J0jk",
           "component": "Heading",
           "label": "Main Heading",
           "props": { "tag": "h1" },
-          "styles": { "fontSize": "60px", "fontWeight": "800", "color": "#ffffff", "lineHeight": "1.1" },
-          "text": "Ship your site in minutes",
+          "styles": {
+            "fontSize": "56px",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "lineHeight": "1.15",
+            "maxWidth": "800px",
+            "margin": "0 auto"
+          },
+          "text": "Build next-gen web apps faster than ever",
           "children": []
         },
         {
           "id": "P2k1L2lm",
           "component": "Paragraph",
-          "label": "Sub-heading",
+          "label": "Sub-heading text",
           "props": {},
-          "styles": { "fontSize": "20px", "color": "#94a3b8", "marginTop": "16px" },
-          "text": "Describe it, refine it, own the code.",
+          "styles": {
+            "fontSize": "18px",
+            "color": "#94a3b8",
+            "marginTop": "20px",
+            "maxWidth": "600px",
+            "lineHeight": "1.6"
+          },
+          "text": "Nova's AI builder handles layout, design systems, and component binding automatically, so you can focus on building.",
           "children": []
+        },
+        {
+          "id": "Bt9mL0no",
+          "component": "Button",
+          "label": "Get Started Button",
+          "props": { "type": "button", "variant": "default", "size": "lg" },
+          "styles": {
+            "marginTop": "32px",
+            "padding": "12px 28px",
+            "background": "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+            "color": "#ffffff",
+            "borderRadius": "8px",
+            "fontWeight": "700",
+            "border": "none",
+            "cursor": "pointer"
+          },
+          "text": "Start Building Free",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "Feat1234",
+      "component": "Box",
+      "label": "Features Section",
+      "props": { "tag": "section" },
+      "styles": {
+        "padding": "80px 24px",
+        "backgroundColor": "#090d16",
+        "display": "flex",
+        "flexDirection": "column",
+        "alignItems": "center"
+      },
+      "children": [
+        {
+          "id": "H2fTitle",
+          "component": "Heading",
+          "label": "Section Heading",
+          "props": { "tag": "h2" },
+          "styles": {
+            "fontSize": "32px",
+            "fontWeight": "800",
+            "color": "#ffffff",
+            "marginBottom": "48px"
+          },
+          "text": "Supercharged visual editing",
+          "children": []
+        },
+        {
+          "id": "GridCont",
+          "component": "Box",
+          "label": "Cards Container",
+          "props": { "tag": "div" },
+          "styles": {
+            "display": "flex",
+            "flexWrap": "wrap",
+            "justifyContent": "center",
+            "gap": "24px",
+            "maxWidth": "1200px",
+            "width": "100%"
+          },
+          "children": [
+            {
+              "id": "Card1",
+              "component": "Card",
+              "label": "Feature Card 1",
+              "props": {},
+              "styles": {
+                "flex": "1 1 300px",
+                "maxWidth": "360px",
+                "backgroundColor": "#1e293b",
+                "border": "1px solid rgba(255,255,255,0.05)",
+                "padding": "24px",
+                "borderRadius": "12px",
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "12px"
+              },
+              "children": [
+                {
+                  "id": "C1Badge",
+                  "component": "Badge",
+                  "label": "Card Badge",
+                  "props": { "variant": "outline" },
+                  "styles": { "alignSelf": "flex-start" },
+                  "text": "Popular",
+                  "children": []
+                },
+                {
+                  "id": "C1Heading",
+                  "component": "Heading",
+                  "label": "Card Title",
+                  "props": { "tag": "h3" },
+                  "styles": { "fontSize": "20px", "fontWeight": "700", "color": "#ffffff" },
+                  "text": "Component Explorer",
+                  "children": []
+                },
+                {
+                  "id": "C1Para",
+                  "component": "Paragraph",
+                  "label": "Card Text",
+                  "props": {},
+                  "styles": { "fontSize": "14px", "color": "#94a3b8", "lineHeight": "1.5" },
+                  "text": "Browse and inject Shadcn components instantly with correct structures.",
+                  "children": []
+                }
+              ]
+            }
+          ]
         }
       ]
     }
