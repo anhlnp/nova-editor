@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
-import { $selectedInstanceSelector, $isPreviewMode } from "@/lib/nano-states";
+import { $selectedInstanceSelector, $isPreviewMode, $textEditingInstance } from "@/lib/nano-states";
 import { $instances } from "@/lib/data-stores";
 import {
   HANDLES,
@@ -175,6 +175,7 @@ export function SelectionOverlay() {
   const selector = useStore($selectedInstanceSelector);
   const isPreview = useStore($isPreviewMode);
   const instances = useStore($instances);
+  const textEditing = useStore($textEditingInstance);
 
   const [rect, setRect] = useState<Rect | null>(null);
   const [preview, setPreview] = useState<Rect | null>(null);
@@ -464,7 +465,7 @@ export function SelectionOverlay() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   const box = preview ?? rect;
-  if (!box || isPreview) return null;
+  if (!box || isPreview || textEditing) return null;
 
   const label = `${componentName}  ${Math.round(box.width)} × ${Math.round(box.height)}`;
   const colEnd = gridPos ? gridPos.colStart + gridPos.span - 1 : null;

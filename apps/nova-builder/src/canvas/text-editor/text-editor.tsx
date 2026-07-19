@@ -20,6 +20,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {
@@ -29,6 +30,7 @@ import {
   FORMAT_TEXT_COMMAND,
   KEY_ESCAPE_COMMAND,
   KEY_ENTER_COMMAND,
+  BLUR_COMMAND,
   COMMAND_PRIORITY_EDITOR,
 } from "lexical";
 import type { Instance } from "@webstudio-is/sdk";
@@ -93,6 +95,17 @@ function EditorCommands({
           return true;
         }
         return false;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor, commit]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      BLUR_COMMAND,
+      () => {
+        commit();
+        return true;
       },
       COMMAND_PRIORITY_EDITOR
     );
@@ -172,6 +185,7 @@ export function TextEditor({ instanceId, initialChildren, onCommit, onCancel, st
         />
         <HistoryPlugin />
         <LinkPlugin />
+        <AutoFocusPlugin />
         <EditorCommands
           onCommit={onCommit}
           onCancel={onCancel}
