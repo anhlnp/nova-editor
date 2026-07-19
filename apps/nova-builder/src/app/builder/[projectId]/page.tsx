@@ -41,9 +41,12 @@ import { saveProject } from "@/lib/saveProject";
 import { parseRichHtml } from "@/lib/richText";
 import { writeStyle } from "@/lib/styleInspectorWrite";
 import type { AnyStyleDecl } from "@/lib/styleValueConversion";
-import { applyReparent } from "@/lib/treeMove";
+import { applyReparent, buildParentMap, moveToNewParent } from "@/lib/treeMove";
 import type { SyncEmitter } from "@/lib/sync-client";
 import { deleteInstance } from "@/lib/edit-operations";
+import { writeGridSpan, writeGridColumnStart } from "@/lib/propWriteHelper";
+import { writeGridColumnStyle } from "@/lib/styleWriteHelper";
+
 
 import { useProjectLoad } from "@/builder/hooks/useProjectLoad";
 import { useBuilderKeyboard } from "@/builder/hooks/useBuilderKeyboard";
@@ -266,8 +269,28 @@ export default function BuilderPage() {
         const { draggedId, targetId, position } = e.data as {
           draggedId: string; targetId: string; position: "above" | "below" | "into";
         };
-        const next = applyReparent($instances.get(), draggedId, targetId, position);
-        if (next && next !== $instances.get()) {
+        const instances = $instances.get();
+        const draggedInst = instances.get(draggedId);
+        const targetInst = instances.get(targetId);
+        const parentMap = buildParentMap(instances);
+        
+        let isMovingToGridRow = false;
+        if (position === "into") {
+          isMovingToGridRow = targetInst?.component === "HeroUIRow";
+        } else {
+          const newParentId = parentMap.get(targetId);
+          if (newParentId) {
+            const newParent = instances.get(newParentId);
+            isMovingToGridRow = newParent?.component === "HeroUIRow";
+          }
+        }
+
+        if (draggedInst?.component === "HeroUICol" && isMovingToGridRow) {
+          writeGridColumnStart(draggedId, null);
+        }
+
+        const next = applyReparent(instances, draggedId, targetId, position);
+        if (next && next !== instances) {
           updateData(({ instances }) => replaceMap(instances, next));
         }
         return;
@@ -293,6 +316,69 @@ export default function BuilderPage() {
         };
         if (typeof width === "number") writeDim("width", width);
         if (typeof height === "number") writeDim("height", height);
+        return;
+      }
+      // Grid handles (E/W resizing for grid span).
+      if (e.data?.type === "nova:gridSpanCommit") {
+        const { instanceId, span } = e.data as { instanceId: string; span: number };
+        writeGridSpan(instanceId, span);
+        return;
+      }
+      // Grid handles (Move handles for grid start column).
+      if (e.data?.type === "nova:gridMoveCommit") {
+        const { instanceId, colStart, targetRowId, index } = e.data as { 
+          instanceId: string; colStart: number | null; targetRowId?: string; index?: number;
+        };
+        writeGridColumnStart(instanceId, colStart);
+        
+        if (targetRowId && typeof index === "number") {
+          const instances = $instances.get();
+          const parentMap = buildParentMap(instances);
+          const oldParentId = parentMap.get(instanceId);
+          if (oldParentId) {
+            const next = moveToNewParent(instances, instanceId, oldParentId, targetRowId, index);
+            if (next && next !== instances) {
+              updateData(({ instances }) => replaceMap(instances, next));
+            }
+          }
+        }
+        return;
+      }
+      // Grid column commit (canvas SelectionOverlay snap-resize + move handle).
+      // Writes CSS `grid-column: colStart / span N` via the style engine so it
+      // flows through SyncClient and the StyleInspector reflects it immediately.
+      if (e.data?.type === "nova:gridColumnCommit") {
+        const { instanceId, colStart, span } = e.data as {
+          instanceId: string;
+          colStart: number;
+          span: number;
+        };
+        writeGridColumnStyle(instanceId, colStart, span);
+        $isDirty.set(true);
+        return;
+      }
+      // Reorder child within same parent (row move via move handle).
+      if (e.data?.type === "nova:reorderChild") {
+        const { parentId, childId, deltaIndex } = e.data as {
+          parentId: string;
+          childId: string;
+          deltaIndex: number;
+        };
+        const instances = $instances.get();
+        const parent = instances.get(parentId);
+        if (!parent) return;
+        const children = [...parent.children];
+        const idx = children.findIndex(
+          (c) => c.type === "id" && (c as { type: string; value: string }).value === childId
+        );
+        if (idx < 0) return;
+        const newIdx = Math.max(0, Math.min(children.length - 1, idx + deltaIndex));
+        children.splice(newIdx, 0, ...children.splice(idx, 1));
+        updateData(({ instances }) => {
+          const p = instances.get(parentId);
+          if (p) instances.set(parentId, { ...p, children } as Parameters<typeof instances.set>[1]);
+        });
+        $isDirty.set(true);
         return;
       }
       // Legacy plain-text commit (still used as fallback)

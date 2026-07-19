@@ -39,6 +39,9 @@ import {
 import { updateData } from "@/lib/transactions";
 import { UI_VARS as C, UI_VARS as DARK } from "@/lib/uiTheme";
 import { useI18n } from "@/lib/i18n";
+import { GridPositionControl } from "./GridPositionControl";
+import { writeGridColumnStyle } from "@/lib/styleWriteHelper";
+
 
 type Src = { id: string; type: string; name?: string };
 type Sel = { instanceId: string; values: string[] };
@@ -198,6 +201,24 @@ export function StyleInspector() {
   const gridColumnCss = css("gridColumn");
   const gridRowCss = css("gridRow");
 
+  // Parse gridColumn into colStart + span for GridPositionControl
+  function parseGridColumnCss(raw: string): { colStart: number; span: number } | null {
+    if (!raw) return null;
+    // Formats: "3 / span 4", "3 / 7", "3"
+    const spanMatch = raw.match(/(\d+)\s*\/\s*span\s+(\d+)/);
+    if (spanMatch) return { colStart: parseInt(spanMatch[1]), span: parseInt(spanMatch[2]) };
+    const lineMatch = raw.match(/(\d+)\s*\/\s*(\d+)/);
+    if (lineMatch) {
+      const start = parseInt(lineMatch[1]);
+      const end = parseInt(lineMatch[2]);
+      return { colStart: start, span: Math.max(1, end - start) };
+    }
+    const singleMatch = raw.match(/^(\d+)$/);
+    if (singleMatch) return { colStart: parseInt(singleMatch[1]), span: 1 };
+    return null;
+  }
+  const gridChildPos = parseGridColumnCss(gridColumnCss);
+
   const grouped = new Map<string, [string, AnyStyleDecl][]>(SECTION_ORDER.map((n) => [n, []]));
   for (const [prop, decl] of byProperty) {
     if (DEDICATED.has(prop)) continue;
@@ -214,6 +235,17 @@ export function StyleInspector() {
       {isMultiSelect ? <MultiSelectHeader count={multiSelectedIds.length} /> : <InstanceHeader />}
       <StateSelector />
       {!isMultiSelect && <TokenChipsRow instanceId={instanceId} />}
+      {/* Grid position control — shown when element has an explicit grid-column CSS value */}
+      {!isMultiSelect && gridChildPos && (
+        <GridPositionControl
+          key={`${instanceId}-gpc`}
+          colStart={gridChildPos.colStart}
+          span={gridChildPos.span}
+          onChange={(colStart, span) => {
+            writeGridColumnStyle(instanceId, colStart, span);
+          }}
+        />
+      )}
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1 }}>
           {byProperty.size === 0 ? (
@@ -233,7 +265,7 @@ export function StyleInspector() {
         <BackdropFilterPanel key={`${instanceId}-backdrop-${backdropFilterCss}`} instanceId={instanceId} currentCss={backdropFilterCss} />
         <GradientPanel key={`${instanceId}-gradient-${backgroundImageCss}`} instanceId={instanceId} currentCss={backgroundImageCss} />
         <GridContainerPanel key={`${instanceId}-grid-container-${gridTemplateColumnsCss}-${gridTemplateRowsCss}`} instanceId={instanceId} columnsCss={gridTemplateColumnsCss} rowsCss={gridTemplateRowsCss} />
-        <GridChildPanel key={`${instanceId}-grid-child-${gridColumnCss}-${gridRowCss}`} instanceId={instanceId} columnCss={gridColumnCss} rowCss={gridRowCss} />
+        <GridChildPanel key={`${instanceId}-grid-child-${gridRowCss}`} instanceId={instanceId} rowCss={gridRowCss} />
         {!isMultiSelect && <AddPropertyRow instanceId={instanceId} breakpointId={bpId} />}
       </div>
     </div>

@@ -13,4 +13,15 @@ export {
   type Point,
   type Placement,
   type ChildrenOrientation,
+  getClosestRectIndex,
+  getRectsOrientation,
+  getPlacementInside,
+  getPlacementBetween,
+  getIndexAdjustment,
+  getArea,
 } from "./geometry-utils";
+export {
+  getChildrenRects,
+  getLocalChildrenOrientation,
+} from "./dom-utils";
+

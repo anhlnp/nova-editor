@@ -407,16 +407,26 @@ export function ComponentsPanel() {
 
       {/* Floating Draggable Ghost Preview */}
       {isDragging && draggedComponent && (
-        <div
-          className="fixed pointer-events-none z-50 bg-primary/20 border border-primary text-primary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-sm"
-          style={{
-            left: ghostPos.x + 10,
-            top: ghostPos.y + 10,
-          }}
-        >
-          <span>➕</span>
-          <span>{draggedComponent.replace("heroui:HeroUI", "").replace("heroui:", "")}</span>
-        </div>
+        <>
+          <style>{`
+            @keyframes nova-pickup {
+              0% { transform: scale(0.9) rotate(-2deg); }
+              100% { transform: scale(1) rotate(-1deg); }
+            }
+          `}</style>
+          <div
+            className="fixed pointer-events-none z-50 bg-primary/20 border border-primary text-primary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-sm"
+            style={{
+              left: ghostPos.x + 10,
+              top: ghostPos.y + 10,
+              animation: "nova-pickup 0.15s ease-out forwards",
+              transform: "rotate(-1deg)"
+            }}
+          >
+            <span>➕</span>
+            <span>{draggedComponent.replace("heroui:HeroUI", "").replace("heroui:", "")}</span>
+          </div>
+        </>
       )}
     </div>
   );

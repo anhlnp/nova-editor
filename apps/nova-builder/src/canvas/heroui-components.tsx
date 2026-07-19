@@ -531,14 +531,15 @@ HeroUIRow.displayName = "HeroUIRow";
 export const HeroUICol = forwardRef<HTMLDivElement, {
   children?: ReactNode;
   span?: number;
+  colStart?: number | null;
   instance?: unknown;
   instanceSelector?: unknown;
   components?: unknown;
   [key: string]: unknown;
-}>(({ children, span = 6, instance, instanceSelector, components, ...rest }, ref) => {
+}>(({ children, span = 6, colStart, instance, instanceSelector, components, ...rest }, ref) => {
   const s = Math.max(1, Math.min(12, Number(span) || 6));
   const style: CSSProperties = {
-    gridColumn: `span ${s} / span ${s}`,
+    gridColumn: colStart != null ? `${colStart} / span ${s}` : `span ${s} / span ${s}`,
     minWidth: 0,
   };
 
