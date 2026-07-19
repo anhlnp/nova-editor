@@ -11,7 +11,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 function SignupForm() {
   const { t } = useI18n();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/projects";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const backHref = callbackUrl.startsWith("/builder/") ? callbackUrl : "/";
 
   const [name, setName] = useState("");
@@ -71,14 +71,14 @@ function SignupForm() {
           {/* OAuth buttons */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
             <button
-              onClick={() => signIn("google", { callbackUrl: "/projects" })}
+              onClick={() => signIn("google", { callbackUrl })}
               style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, border: "1.5px solid #e2e8f0", borderRadius: 10, background: "#ffffff", color: "#0f172a", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "system-ui, -apple-system, sans-serif" }}
             >
               <GoogleIcon />
               {t.auth.continueWithGoogle}
             </button>
             <button
-              onClick={() => signIn("github", { callbackUrl: "/projects" })}
+              onClick={() => signIn("github", { callbackUrl })}
               style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, border: "1.5px solid #e2e8f0", borderRadius: 10, background: "#ffffff", color: "#0f172a", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "system-ui, -apple-system, sans-serif" }}
             >
               <GitHubIcon />

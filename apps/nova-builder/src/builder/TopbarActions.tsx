@@ -31,6 +31,7 @@ import {
   $customCss,
   $isDirty,
   $saveTriggerCount,
+  showToast,
 } from "@/lib/nano-states";
 import { saveProject } from "@/lib/saveProject";
 import { SaveProjectDialog } from "./SaveProjectDialog";
@@ -148,9 +149,12 @@ export function TopbarActions({ isDemo }: Props) {
       await saveProject(meta.id);
       $isDirty.set(false);
       setLastSavedTime(Date.now());
+      showToast("Project changes saved successfully!", "success");
+      router.push("/projects");
     } catch (err) {
       console.error(err);
       setSaveError(true);
+      showToast(err instanceof Error ? err.message : "Failed to update project", "error");
       throw err;
     } finally {
       setIsSaving(false);
@@ -208,10 +212,12 @@ export function TopbarActions({ isDemo }: Props) {
       $isDirty.set(false);
       setLastSavedTime(Date.now());
 
-      router.push(`/builder/${id}`);
+      showToast("Project created and saved successfully!", "success");
+      router.push("/projects");
     } catch (err) {
       console.error(err);
       setSaveError(true);
+      showToast(err instanceof Error ? err.message : "Failed to create project", "error");
       throw err;
     } finally {
       setIsSaving(false);
@@ -238,10 +244,12 @@ export function TopbarActions({ isDemo }: Props) {
       $isDirty.set(false);
       setLastSavedTime(Date.now());
 
-      router.push(`/builder/${id}`);
+      showToast("Project copy saved successfully!", "success");
+      router.push("/projects");
     } catch (err) {
       console.error(err);
       setSaveError(true);
+      showToast(err instanceof Error ? err.message : "Failed to save project copy", "error");
       throw err;
     } finally {
       setIsSaving(false);
