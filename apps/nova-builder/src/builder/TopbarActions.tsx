@@ -457,6 +457,15 @@ export function TopbarActions({ isDemo }: Props) {
                       ? timeLabel
                       : "Save"}
             </button>
+
+            {/* ✦ Generate — also in demo mode */}
+            <button
+              onClick={() => $aiPanelOpen.set(!isAIPanelOpen)}
+              title="Generate with AI"
+              style={{ padding: "4px 14px", borderRadius: 6, border: `1px solid ${isAIPanelOpen ? C.accentBorder : C.accent}`, background: isAIPanelOpen ? C.accentBg : `linear-gradient(135deg, ${C.accentBg} 0%, rgba(79,70,229,0.1) 100%)`, color: C.accentText, fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}
+            >
+              {t.builder.generate}
+            </button>
           </>
         ) : (
           <>

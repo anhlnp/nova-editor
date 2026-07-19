@@ -13,6 +13,7 @@ const PUBLIC_PREFIXES = [
   "/canvas",
   "/preview",
   "/api/auth",
+  "/api/ai",
   "/api/preview",
   "/api/analytics/track",
   "/api/submissions",

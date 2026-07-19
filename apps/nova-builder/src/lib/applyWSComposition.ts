@@ -10,7 +10,9 @@
 // The page atom update triggers canvas re-render via SyncClient.
 import type { WSCompositionResult } from "@studio/ai";
 import type { Instance } from "@webstudio-is/sdk";
+import { compareMedia } from "@webstudio-is/css-engine";
 import { $selectedPage, $nestingWarning } from "./nano-states";
+import { $breakpoints } from "./data-stores";
 import { updateData } from "./transactions";
 import { checkDirectNesting } from "./nestingGuard";
 import { uid } from "./uid";
@@ -39,6 +41,15 @@ export function applyWSComposition(result: WSCompositionResult): void {
 
   const page = $selectedPage.get();
   if (!page) return;
+
+  const breakpoints = $breakpoints.get();
+  let baseBpId = "base";
+  if (breakpoints.size > 0) {
+    const sorted = [...breakpoints.values()].sort(
+      compareMedia as (a: (typeof sorted)[0], b: (typeof sorted)[0]) => number
+    );
+    baseBpId = sorted[0]?.id ?? "base";
+  }
 
   warnOnAiNesting(result.instances as unknown as Instance[]);
 
@@ -70,8 +81,12 @@ export function applyWSComposition(result: WSCompositionResult): void {
     }
     // StyleDecl key: `${styleSourceId}:${breakpointId}:${state ?? ""}:${property}`
     for (const decl of result.styles) {
-      const key = `${decl.styleSourceId}:${decl.breakpointId}::${decl.property}`;
-      styles.set(key, decl as Parameters<typeof styles.set>[1]);
+      const bpId = decl.breakpointId === "base" ? baseBpId : decl.breakpointId;
+      const key = `${decl.styleSourceId}:${bpId}::${decl.property}`;
+      styles.set(key, {
+        ...decl,
+        breakpointId: bpId,
+      } as Parameters<typeof styles.set>[1]);
     }
 
     // 7. Point the active page at the new root
