@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { UI_VARS as C } from "@/lib/uiTheme";
 
@@ -36,9 +36,9 @@ export function BreakpointPill({
       style={{
         padding: "3px 11px",
         borderRadius: 20,
-        border: `1px solid ${active ? "rgba(124,58,237,0.5)" : "rgba(255,255,255,0.1)"}`,
-        background: active ? "rgba(124,58,237,0.18)" : "transparent",
-        color: active ? "#c4b5fd" : C.textMuted,
+        border: `1px solid ${active ? C.accentBorder : C.border}`,
+        background: active ? C.accentBg : "transparent",
+        color: active ? C.accentText : C.textMuted,
         fontSize: 13,
         fontFamily: C.font,
         fontWeight: active ? 600 : 400,

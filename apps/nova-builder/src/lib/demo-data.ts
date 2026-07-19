@@ -64,20 +64,20 @@ function instSd(instId: string, property: string, value: Record<string, unknown>
 function makeStyles() {
   const entries: [string, Record<string, unknown>][] = [];
 
-  // Body: dark background
-  entries.push([instSk(I.body, "backgroundColor"), instSd(I.body, "backgroundColor", rgb(10, 10, 20))]);
+  // Body: white background
+  entries.push([instSk(I.body, "backgroundColor"), instSd(I.body, "backgroundColor", rgb(255, 255, 255))]);
   entries.push([instSk(I.body, "margin"), instSd(I.body, "margin", unit(0, "px"))]);
   entries.push([instSk(I.body, "padding"), instSd(I.body, "padding", unit(0, "px"))]);
   entries.push([instSk(I.body, "fontFamily"), instSd(I.body, "fontFamily", kw("system-ui, -apple-system, sans-serif"))]);
 
-  // Hero section: full-page dark hero
+  // Hero section: full-page white hero
   entries.push([instSk(I.hero, "minHeight"), instSd(I.hero, "minHeight", unit(100, "vh"))]);
   entries.push([instSk(I.hero, "display"), instSd(I.hero, "display", kw("flex"))]);
   entries.push([instSk(I.hero, "flexDirection"), instSd(I.hero, "flexDirection", kw("column"))]);
   entries.push([instSk(I.hero, "alignItems"), instSd(I.hero, "alignItems", kw("center"))]);
   entries.push([instSk(I.hero, "justifyContent"), instSd(I.hero, "justifyContent", kw("center"))]);
   entries.push([instSk(I.hero, "padding"), instSd(I.hero, "padding", unit(80, "px"))]);
-  entries.push([instSk(I.hero, "backgroundColor"), instSd(I.hero, "backgroundColor", rgb(10, 10, 20))]);
+  entries.push([instSk(I.hero, "backgroundColor"), instSd(I.hero, "backgroundColor", rgb(255, 255, 255))]);
   entries.push([instSk(I.hero, "textAlign"), instSd(I.hero, "textAlign", kw("center"))]);
 
   // Inner content box
@@ -96,18 +96,18 @@ function makeStyles() {
   entries.push([instSk(I.badge, "paddingTop"), instSd(I.badge, "paddingTop", unit(4, "px"))]);
   entries.push([instSk(I.badge, "paddingBottom"), instSd(I.badge, "paddingBottom", unit(4, "px"))]);
   entries.push([instSk(I.badge, "borderRadius"), instSd(I.badge, "borderRadius", unit(999, "px"))]);
-  entries.push([instSk(I.badge, "backgroundColor"), instSd(I.badge, "backgroundColor", rgb(124, 58, 237, 0.12))]);
+  entries.push([instSk(I.badge, "backgroundColor"), instSd(I.badge, "backgroundColor", rgb(124, 58, 237, 0.08))]);
   entries.push([instSk(I.badge, "borderWidth"), instSd(I.badge, "borderWidth", unit(1, "px"))]);
   entries.push([instSk(I.badge, "borderStyle"), instSd(I.badge, "borderStyle", kw("solid"))]);
-  entries.push([instSk(I.badge, "borderColor"), instSd(I.badge, "borderColor", rgb(124, 58, 237, 0.3))]);
-  entries.push([instSk(I.badge, "color"), instSd(I.badge, "color", rgb(167, 139, 250))]);
+  entries.push([instSk(I.badge, "borderColor"), instSd(I.badge, "borderColor", rgb(124, 58, 237, 0.2))]);
+  entries.push([instSk(I.badge, "color"), instSd(I.badge, "color", rgb(109, 40, 217))]);
   entries.push([instSk(I.badge, "fontSize"), instSd(I.badge, "fontSize", unit(12, "px"))]);
   entries.push([instSk(I.badge, "fontWeight"), instSd(I.badge, "fontWeight", unit(600, "number"))]);
 
   // Main heading
   entries.push([instSk(I.heading, "fontSize"), instSd(I.heading, "fontSize", unit(56, "px"))]);
   entries.push([instSk(I.heading, "fontWeight"), instSd(I.heading, "fontWeight", unit(900, "number"))]);
-  entries.push([instSk(I.heading, "color"), instSd(I.heading, "color", rgb(255, 255, 255))]);
+  entries.push([instSk(I.heading, "color"), instSd(I.heading, "color", rgb(15, 23, 42))]);
   entries.push([instSk(I.heading, "lineHeight"), instSd(I.heading, "lineHeight", unit(1.05, "number"))]);
   entries.push([instSk(I.heading, "letterSpacing"), instSd(I.heading, "letterSpacing", unit(-0.02, "em"))]);
   entries.push([instSk(I.heading, "margin"), instSd(I.heading, "margin", unit(0, "px"))]);
@@ -115,7 +115,7 @@ function makeStyles() {
 
   // Subtitle paragraph
   entries.push([instSk(I.sub, "fontSize"), instSd(I.sub, "fontSize", unit(18, "px"))]);
-  entries.push([instSk(I.sub, "color"), instSd(I.sub, "color", rgb(255, 255, 255, 0.5))]);
+  entries.push([instSk(I.sub, "color"), instSd(I.sub, "color", rgb(71, 85, 105))]);
   entries.push([instSk(I.sub, "lineHeight"), instSd(I.sub, "lineHeight", unit(1.6, "number"))]);
   entries.push([instSk(I.sub, "margin"), instSd(I.sub, "margin", unit(0, "px"))]);
   entries.push([instSk(I.sub, "maxWidth"), instSd(I.sub, "maxWidth", unit(500, "px"))]);
@@ -146,20 +146,20 @@ function makeStyles() {
   entries.push([instSk(I.btn2, "paddingTop"), instSd(I.btn2, "paddingTop", unit(14, "px"))]);
   entries.push([instSk(I.btn2, "paddingBottom"), instSd(I.btn2, "paddingBottom", unit(14, "px"))]);
   entries.push([instSk(I.btn2, "borderRadius"), instSd(I.btn2, "borderRadius", unit(10, "px"))]);
-  entries.push([instSk(I.btn2, "backgroundColor"), instSd(I.btn2, "backgroundColor", rgb(255, 255, 255, 0.05))]);
-  entries.push([instSk(I.btn2, "color"), instSd(I.btn2, "color", rgb(255, 255, 255, 0.7))]);
+  entries.push([instSk(I.btn2, "backgroundColor"), instSd(I.btn2, "backgroundColor", rgb(241, 245, 249))]);
+  entries.push([instSk(I.btn2, "color"), instSd(I.btn2, "color", rgb(15, 23, 42))]);
   entries.push([instSk(I.btn2, "fontSize"), instSd(I.btn2, "fontSize", unit(15, "px"))]);
   entries.push([instSk(I.btn2, "fontWeight"), instSd(I.btn2, "fontWeight", unit(600, "number"))]);
   entries.push([instSk(I.btn2, "borderWidth"), instSd(I.btn2, "borderWidth", unit(1, "px"))]);
   entries.push([instSk(I.btn2, "borderStyle"), instSd(I.btn2, "borderStyle", kw("solid"))]);
-  entries.push([instSk(I.btn2, "borderColor"), instSd(I.btn2, "borderColor", rgb(255, 255, 255, 0.12))]);
+  entries.push([instSk(I.btn2, "borderColor"), instSd(I.btn2, "borderColor", rgb(226, 232, 240))]);
   entries.push([instSk(I.btn2, "cursor"), instSd(I.btn2, "cursor", kw("pointer"))]);
 
   // Features section
   entries.push([instSk(I.feats, "padding"), instSd(I.feats, "padding", unit(80, "px"))]);
   entries.push([instSk(I.feats, "paddingLeft"), instSd(I.feats, "paddingLeft", unit(40, "px"))]);
   entries.push([instSk(I.feats, "paddingRight"), instSd(I.feats, "paddingRight", unit(40, "px"))]);
-  entries.push([instSk(I.feats, "backgroundColor"), instSd(I.feats, "backgroundColor", rgb(14, 14, 28))]);
+  entries.push([instSk(I.feats, "backgroundColor"), instSd(I.feats, "backgroundColor", rgb(248, 250, 252))]);
 
   // Features grid
   entries.push([instSk(I.fgrid, "display"), instSd(I.fgrid, "display", kw("grid"))]);
@@ -170,10 +170,10 @@ function makeStyles() {
   entries.push([instSk(I.fgrid, "marginRight"), instSd(I.fgrid, "marginRight", kw("auto"))]);
 
   for (const id of [I.c1, I.c2, I.c3]) {
-    entries.push([instSk(id, "backgroundColor"), instSd(id, "backgroundColor", rgb(255, 255, 255, 0.03))]);
+    entries.push([instSk(id, "backgroundColor"), instSd(id, "backgroundColor", rgb(255, 255, 255))]);
     entries.push([instSk(id, "borderWidth"), instSd(id, "borderWidth", unit(1, "px"))]);
     entries.push([instSk(id, "borderStyle"), instSd(id, "borderStyle", kw("solid"))]);
-    entries.push([instSk(id, "borderColor"), instSd(id, "borderColor", rgb(255, 255, 255, 0.07))]);
+    entries.push([instSk(id, "borderColor"), instSd(id, "borderColor", rgb(226, 232, 240))]);
     entries.push([instSk(id, "borderRadius"), instSd(id, "borderRadius", unit(16, "px"))]);
     entries.push([instSk(id, "padding"), instSd(id, "padding", unit(28, "px"))]);
     entries.push([instSk(id, "display"), instSd(id, "display", kw("flex"))]);
@@ -189,13 +189,13 @@ function makeStyles() {
   for (const id of [I.c1h, I.c2h, I.c3h]) {
     entries.push([instSk(id, "fontSize"), instSd(id, "fontSize", unit(16, "px"))]);
     entries.push([instSk(id, "fontWeight"), instSd(id, "fontWeight", unit(700, "number"))]);
-    entries.push([instSk(id, "color"), instSd(id, "color", rgb(255, 255, 255))]);
+    entries.push([instSk(id, "color"), instSd(id, "color", rgb(15, 23, 42))]);
     entries.push([instSk(id, "margin"), instSd(id, "margin", unit(0, "px"))]);
   }
 
   for (const id of [I.c1p, I.c2p, I.c3p]) {
     entries.push([instSk(id, "fontSize"), instSd(id, "fontSize", unit(14, "px"))]);
-    entries.push([instSk(id, "color"), instSd(id, "color", rgb(255, 255, 255, 0.45))]);
+    entries.push([instSk(id, "color"), instSd(id, "color", rgb(71, 85, 105))]);
     entries.push([instSk(id, "lineHeight"), instSd(id, "lineHeight", unit(1.55, "number"))]);
     entries.push([instSk(id, "margin"), instSd(id, "margin", unit(0, "px"))]);
   }

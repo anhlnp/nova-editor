@@ -100,7 +100,7 @@ export function Topbar({ isDemo }: { isDemo?: boolean }) {
             { label: "⌫", title: t.builder.deleteTooltip, onClick: handleDelete, disabled: !selectedId, danger: true },
           ] as Array<{ label: string; title: string; onClick: () => void; disabled: boolean; danger?: boolean }>
         ).map(({ label, title, onClick, disabled, danger }) => (
-          <button key={title} onClick={onClick} disabled={disabled} title={title} style={{ background: "none", border: "none", cursor: disabled ? "default" : "pointer", color: disabled ? "rgba(255,255,255,0.18)" : danger ? "rgba(248,113,113,0.75)" : "rgba(255,255,255,0.45)", fontSize: 13, padding: "3px 7px", borderRadius: 4, lineHeight: 1, fontFamily: C.font, transition: "color 0.1s" }}>
+          <button key={title} onClick={onClick} disabled={disabled} title={title} style={{ background: "none", border: "none", cursor: disabled ? "default" : "pointer", color: disabled ? C.border : danger ? C.danger : C.textMuted, fontSize: 13, padding: "3px 7px", borderRadius: 4, lineHeight: 1, fontFamily: C.font, transition: "color 0.1s" }}>
             {label}
           </button>
         ))}
@@ -113,7 +113,7 @@ export function Topbar({ isDemo }: { isDemo?: boolean }) {
         {sortedBreakpoints.map((bp) => (
           <BreakpointPill key={bp.id} bp={bp} active={bp.id === activeBreakpoint?.id} onClick={() => $selectedBreakpointId.set(bp.id)} />
         ))}
-        <button onClick={() => setBpManagerOpen((v) => !v)} title={t.builder.manageBreakpoints} style={{ background: bpManagerOpen ? "rgba(124,58,237,0.15)" : "none", border: `1px solid ${bpManagerOpen ? "rgba(124,58,237,0.4)" : "transparent"}`, cursor: "pointer", color: bpManagerOpen ? "#c4b5fd" : "rgba(255,255,255,0.3)", fontSize: 13, lineHeight: 1, padding: "3px 6px", borderRadius: 4, fontFamily: C.font, transition: "all 0.1s" }}>⚙</button>
+        <button onClick={() => setBpManagerOpen((v) => !v)} title={t.builder.manageBreakpoints} style={{ background: bpManagerOpen ? C.accentBg : "none", border: `1px solid ${bpManagerOpen ? C.accentBorder : "transparent"}`, cursor: "pointer", color: bpManagerOpen ? C.accentText : C.textMuted, fontSize: 13, lineHeight: 1, padding: "3px 6px", borderRadius: 4, fontFamily: C.font, transition: "all 0.1s" }}>⚙</button>
         {bpManagerOpen && <BreakpointManager onClose={() => setBpManagerOpen(false)} />}
       </div>
 

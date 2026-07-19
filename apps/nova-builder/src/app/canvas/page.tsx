@@ -113,6 +113,15 @@ function DiagnosticsOverlay() {
 
 export default function CanvasPage() {
   const isPreview = useStore($isPreviewMode);
+  const [theme, setTheme] = useState("dark");
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const t = searchParams.get("theme");
+    if (t === "light" || t === "dark" || t === "elder") {
+      setTheme(t);
+    }
+  }, []);
 
   return (
     <HeroUIProvider>
@@ -122,7 +131,7 @@ export default function CanvasPage() {
           <CanvasClient />
         </div>
       ) : (
-        <div className="dark text-foreground bg-background min-h-screen relative">
+        <div className={`${theme} text-foreground bg-background min-h-screen relative`}>
           <CanvasClient />
           <DiagnosticsOverlay />
         </div>
