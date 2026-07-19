@@ -1,6 +1,11 @@
 // POST: AI compose — natural language → WebstudioData patch (WS component format).
 // Auth, rate-limit, credit check identical to studio's AI route (ADR-006/038).
 // Returns WSCompositionResult which the client applies to nanostores atoms.
+//
+// DEV FALLBACK: In development, if Supabase is unreachable (DNS failure, dummy
+// URL, etc.), the auth / credit / rate-limit / conversation steps are skipped
+// and the AI compose runs directly. This lets devs test generation locally
+// without a real Supabase project.
 import { getToken } from "next-auth/jwt";
 import {
   getOrProvisionUser,
@@ -19,40 +24,71 @@ import {
 import type { ProviderName } from "@studio/ai";
 import { dailyCreditCap, decideCreditSource } from "@/lib/tiers";
 
-export async function POST(req: Request) {
-  // 1. Auth
-  const token = await getToken({ req: req as Parameters<typeof getToken>[0]["req"] });
-  if (!token?.githubId && !token?.email) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+const isDev = process.env.NODE_ENV === "development";
 
-  // 2. Load user
-  let user: Awaited<ReturnType<typeof getOrProvisionUser>>;
+/** Run AI compose without any auth/credit checks. Used as dev fallback. */
+async function composeWithoutAuth(
+  providerName: ProviderName,
+  userMessage: string
+): Promise<Response> {
+  const provider = getProvider(providerName);
   try {
-    user = await getOrProvisionUser(token);
-  } catch {
-    return Response.json({ error: "User not found" }, { status: 404 });
+    const rawOutput = await composerAgentWS(provider, userMessage);
+    const composition = validateCompositionWS(rawOutput);
+    return Response.json({
+      composition,
+      provider: provider.id,
+      creditCost: 0,
+      creditsRemaining: 999,
+      conversationId: null,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "AI compose failed";
+    console.error("[ai/route] AI compose error:", message);
+    return Response.json({ error: message }, { status: 500 });
   }
+}
 
-  // 3. Parse body
-  const {
-    userMessage,
-    projectId,
-    conversationId: clientConversationId,
-    provider: clientProvider,
-  } = (await req.json()) as {
+export async function POST(req: Request) {
+  const body = (await req.json()) as {
     userMessage: string;
     projectId?: string | null;
     conversationId?: string | null;
     provider?: ProviderName;
   };
+  const { userMessage, projectId, conversationId: clientConversationId, provider: clientProvider } = body;
 
   const providerName: ProviderName =
     clientProvider ?? (process.env["AI_PROVIDER"] as ProviderName | undefined) ?? "anthropic";
   const provider = getProvider(providerName);
   const creditCost = PROVIDER_CREDIT_COST[providerName] ?? 1;
 
-  // 4. Credit check (ADR-038)
+  // ── 1. Auth ────────────────────────────────────────────────────────────────
+  const token = await getToken({ req: req as Parameters<typeof getToken>[0]["req"] });
+  if (!token?.githubId && !token?.email) {
+    // In dev, allow unauthenticated AI calls (no login required)
+    if (isDev) {
+      console.log("[ai/route] DEV FALLBACK — no auth token, running AI without auth");
+      return composeWithoutAuth(providerName, userMessage);
+    }
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // ── 2. Load user from Supabase ─────────────────────────────────────────────
+  let user: Awaited<ReturnType<typeof getOrProvisionUser>>;
+  try {
+    user = await getOrProvisionUser(token);
+  } catch (err) {
+    // In dev, if Supabase is unreachable (DNS fail, connection refused, etc.)
+    // fall back to AI-only mode instead of returning 404.
+    if (isDev) {
+      console.warn("[ai/route] DEV FALLBACK — Supabase unreachable, skipping auth/credits:", String(err));
+      return composeWithoutAuth(providerName, userMessage);
+    }
+    return Response.json({ error: "User not found" }, { status: 404 });
+  }
+
+  // ── 3. Credit check (ADR-038) ──────────────────────────────────────────────
   const cap = dailyCreditCap(user.tier);
   const spentTodayMonthly = cap !== null ? await getMonthlySpentToday(user.id) : 0;
   const decision = decideCreditSource({
@@ -75,7 +111,7 @@ export async function POST(req: Request) {
         );
   }
 
-  // 5. Rate limit: max 10 AI ops/minute
+  // ── 4. Rate limit: max 10 AI ops/minute ────────────────────────────────────
   const { count } = await supabase
     .from("credit_transactions")
     .select("id", { count: "exact", head: true })
@@ -90,7 +126,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // 5b. Log the request marker BEFORE the slow AI call (closes concurrent-burst race)
+  // 4b. Log the request marker BEFORE the slow AI call (closes concurrent-burst race)
   await supabase.from("credit_transactions").insert({
     user_id: user.id,
     project_id: projectId ?? null,
@@ -98,7 +134,7 @@ export async function POST(req: Request) {
     reason: "ai_request",
   });
 
-  // 6. Resolve or create conversation
+  // ── 5. Resolve or create conversation ──────────────────────────────────────
   let conversationId = clientConversationId ?? null;
   if (!conversationId && projectId) {
     const title = userMessage.slice(0, 60).trim() || "New composition";
@@ -106,7 +142,7 @@ export async function POST(req: Request) {
     conversationId = created?.id ?? null;
   }
 
-  // 7. Save user message
+  // ── 6. Save user message ───────────────────────────────────────────────────
   if (conversationId && projectId) {
     await saveAIMessage({
       conversationId,
@@ -117,8 +153,8 @@ export async function POST(req: Request) {
     }).catch(() => { /* non-fatal */ });
   }
 
+  // ── 7. Compose → validate ─────────────────────────────────────────────────
   try {
-    // 8. Compose → validate
     const rawOutput = await composerAgentWS(provider, userMessage);
     const composition = validateCompositionWS(rawOutput);
 
@@ -127,7 +163,7 @@ export async function POST(req: Request) {
       await deductCredit(user.id, projectId ?? null, creditCost, decision.source === "topup");
     }
 
-    // 9. Save assistant response
+    // Save assistant response
     const responseText = `Composed ${composition.instances.length} instance(s) using: ${composition.usedComponents.join(", ") || "none"}.`;
     if (conversationId && projectId) {
       await saveAIMessage({
@@ -153,3 +189,4 @@ export async function POST(req: Request) {
     return Response.json({ error: message }, { status: 500 });
   }
 }
+
