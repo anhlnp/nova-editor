@@ -65,7 +65,7 @@ import { KeyboardShortcutsModal } from "@/builder/KeyboardShortcutsModal";
 import { TextFormatToolbar } from "@/builder/TextFormatToolbar";
 import { RemoteCursors, RemoteSelections, usePresence } from "@/builder/PresenceLayer";
 import { CoachMarks } from "@/builder/CoachMarks";
-import { ThemeProvider } from "@/builder/ThemeProvider";
+import { ThemeProvider, $builderTheme } from "@/builder/ThemeProvider";
 import { SafeModeBanner } from "@/builder/SafeModeBanner";
 import { NestingToast } from "@/builder/NestingToast";
 
@@ -88,6 +88,7 @@ export default function BuilderPage() {
   const canvasZoom = useStore($canvasZoom);
   const canvasMaxWidth = selectedBreakpoint?.maxWidth ? `${selectedBreakpoint.maxWidth}px` : "100%";
   const gridGuidesVisible = useStore($gridGuidesVisible);
+  const builderTheme = useStore($builderTheme);
 
   // ── Load project + seed atoms + SyncClient (leader) ─────────────────────────
   const { loadState, errorMessage, syncEmitterRef } = useProjectLoad(projectId, isDemo);
@@ -527,7 +528,7 @@ export default function BuilderPage() {
             <iframe
               key={canvasKey}
               ref={iframeRef}
-              src={canvasKey > 0 ? `/canvas?v=${canvasKey}` : "/canvas"}
+              src={`/canvas?theme=${builderTheme}${canvasKey > 0 ? `&v=${canvasKey}` : ""}`}
               onLoad={onIframeLoad}
               style={{
                 // Explicit pixel height so the scale wrapper has known dimensions.

@@ -111,9 +111,9 @@ export async function POST(req: Request) {
     qrCode: json.data.qrCode,
     amount: json.data.amount,
     orderCode: json.data.orderCode,
-    accountNumber: customAccountNumber || json.data.accountNumber,
-    accountName: customAccountName || json.data.accountName,
-    bin: customBin || json.data.bin,
+    accountNumber: json.data.accountNumber,
+    accountName: json.data.accountName,
+    bin: json.data.bin,
     description: json.data.description,
   });
 }

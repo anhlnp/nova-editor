@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { PAYOS_PRICES_VND } from "@/lib/billing/payos";
 
 export async function POST(req: Request) {
   if (process.env.NODE_ENV !== "development") {
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
     provider: "payos",
     kind: plan === "credits" ? "credits" : "plan",
     user_id: userId || null,
+    amount: PAYOS_PRICES_VND[plan] || 10000,
+    plan: plan,
+    status: "success"
   });
 
   if (claimError) {

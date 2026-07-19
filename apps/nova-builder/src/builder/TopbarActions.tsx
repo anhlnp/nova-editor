@@ -332,7 +332,7 @@ export function TopbarActions({ isDemo }: Props) {
   }, []);
 
   const btnBase = {
-    padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.1)",
+    padding: "3px 10px", borderRadius: 4, border: `1px solid ${C.border}`,
     background: "transparent", color: C.textMuted, fontSize: 13, fontFamily: C.font,
     cursor: "pointer", fontWeight: 600,
   };
@@ -340,9 +340,9 @@ export function TopbarActions({ isDemo }: Props) {
   return (
     <>
       {/* Zoom controls */}
-      <div style={{ display: "flex", alignItems: "center", flexShrink: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", flexShrink: 0, background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 5, overflow: "hidden" }}>
         <button onClick={handleZoomOut} title="Zoom out" style={{ background: "none", border: "none", cursor: "pointer", color: C.textMuted, fontSize: 14, lineHeight: 1, padding: "2px 7px", fontFamily: C.font }}>−</button>
-        <button onClick={() => $canvasZoom.set(1)} title="Reset zoom (Ctrl+0)" style={{ background: "none", border: "none", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: canvasZoom !== 1 ? C.accentText : C.textMuted, fontSize: 13, fontFamily: C.font, fontWeight: canvasZoom !== 1 ? 700 : 400, padding: "2px 8px", minWidth: 40, textAlign: "center" }}>
+        <button onClick={() => $canvasZoom.set(1)} title="Reset zoom (Ctrl+0)" style={{ background: "none", border: "none", borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, cursor: "pointer", color: canvasZoom !== 1 ? C.accentText : C.textMuted, fontSize: 13, fontFamily: C.font, fontWeight: canvasZoom !== 1 ? 700 : 400, padding: "2px 8px", minWidth: 40, textAlign: "center" }}>
           {Math.round(canvasZoom * 100)}%
         </button>
         <button onClick={handleZoomIn} title="Zoom in" style={{ background: "none", border: "none", cursor: "pointer", color: C.textMuted, fontSize: 14, lineHeight: 1, padding: "2px 7px", fontFamily: C.font }}>+</button>
@@ -356,16 +356,16 @@ export function TopbarActions({ isDemo }: Props) {
         <LangToggle />
 
         {/* 1 — Mode pills: Design / Content */}
-        <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, overflow: "hidden", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 5, overflow: "hidden", flexShrink: 0 }}>
           {(["design", "content"] as const).map((m) => (
             <button
               key={m}
               onClick={() => $builderMode.set(m)}
               title={m === "design" ? "Design mode" : "Content-edit mode"}
               style={{
-                background: mode === m ? "rgba(124,58,237,0.18)" : "none",
+                background: mode === m ? C.accentBg : "none",
                 border: "none",
-                borderRight: m !== "content" ? "1px solid rgba(255,255,255,0.08)" : "none",
+                borderRight: m !== "content" ? `1px solid ${C.border}` : "none",
                 cursor: "pointer",
                 color: mode === m ? C.accentText : C.textMuted,
                 fontSize: 12,
@@ -383,7 +383,7 @@ export function TopbarActions({ isDemo }: Props) {
 
         {isDemo ? (
           <>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", fontFamily: C.font, padding: "0 4px" }}>{t.builder.demoNotice}</span>
+            <span style={{ fontSize: 13, color: C.textMuted, fontFamily: C.font, padding: "0 4px" }}>{t.builder.demoNotice}</span>
             <button onClick={() => router.push("/signup")} style={{ padding: "4px 14px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, rgba(124,58,237,0.9) 0%, rgba(79,70,229,0.85) 100%)", color: "#fff", fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}>{t.builder.signUpFree}</button>
             <button
               onClick={() => {
@@ -415,11 +415,11 @@ export function TopbarActions({ isDemo }: Props) {
               }}
               style={{ ...btnBase, transition: "all 0.15s" }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
-                e.currentTarget.style.color = "#fff";
+                e.currentTarget.style.borderColor = C.borderHover;
+                e.currentTarget.style.color = C.text;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.borderColor = C.border;
                 e.currentTarget.style.color = C.textMuted;
               }}
             >
@@ -433,12 +433,12 @@ export function TopbarActions({ isDemo }: Props) {
                 borderRadius: 5,
                 border: "none",
                 background: isSaving
-                  ? "rgba(255,255,255,0.06)"
+                  ? C.inputBg
                   : saveError
-                    ? "rgba(220,38,38,0.85)"
+                    ? C.danger
                     : isDirty
-                      ? "rgba(5,150,105,0.85)"
-                      : "rgba(255,255,255,0.08)",
+                      ? C.success
+                      : C.inputBg,
                 color: isSaving || (!isDirty && !saveError) ? C.textMuted : "#fff",
                 fontSize: 12,
                 fontFamily: C.font,
@@ -515,11 +515,11 @@ export function TopbarActions({ isDemo }: Props) {
                 onClick={() => window.open(`/preview/${meta.id}`, "_blank")}
                 style={{ ...btnBase, transition: "all 0.15s" }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
-                  e.currentTarget.style.color = "#fff";
+                  e.currentTarget.style.borderColor = C.borderHover;
+                  e.currentTarget.style.color = C.text;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.borderColor = C.border;
                   e.currentTarget.style.color = C.textMuted;
                 }}
               >
@@ -536,12 +536,12 @@ export function TopbarActions({ isDemo }: Props) {
                 borderRadius: 5,
                 border: "none",
                 background: isSaving
-                  ? "rgba(255,255,255,0.06)"
+                  ? C.inputBg
                   : saveError
-                    ? "rgba(220,38,38,0.85)"
+                    ? C.danger
                     : isDirty
-                      ? "rgba(5,150,105,0.85)"
-                      : "rgba(255,255,255,0.08)",
+                      ? C.success
+                      : C.inputBg,
                 color: isSaving || (!isDirty && !saveError) ? C.textMuted : "#fff",
                 fontSize: 12,
                 fontFamily: C.font,
@@ -565,7 +565,7 @@ export function TopbarActions({ isDemo }: Props) {
             <button
               onClick={() => $aiPanelOpen.set(!isAIPanelOpen)}
               title="Generate with AI"
-              style={{ padding: "4px 14px", borderRadius: 6, border: `1px solid ${isAIPanelOpen ? "rgba(167,139,250,0.6)" : "rgba(124,58,237,0.4)"}`, background: isAIPanelOpen ? "rgba(124,58,237,0.3)" : "linear-gradient(135deg, rgba(124,58,237,0.22) 0%, rgba(79,70,229,0.16) 100%)", color: C.accentText, fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}
+              style={{ padding: "4px 14px", borderRadius: 6, border: `1px solid ${isAIPanelOpen ? C.accentBorder : C.accent}`, background: isAIPanelOpen ? C.accentBg : `linear-gradient(135deg, ${C.accentBg} 0%, rgba(79,70,229,0.1) 100%)`, color: C.accentText, fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}
             >
               {t.builder.generate}
             </button>

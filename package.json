@@ -4,7 +4,7 @@
   "private": true,
   "description": "AI-powered visual editor that writes React code and syncs it to GitHub",
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "node -e \"const fs = require('fs'); if (fs.existsSync('.env.local')) { fs.copyFileSync('.env.local', 'apps/nova-builder/.env.local'); console.log('✓ Synced .env.local to apps/nova-builder/.env.local'); }\" && turbo dev",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",

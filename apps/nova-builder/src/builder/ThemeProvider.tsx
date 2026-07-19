@@ -4,8 +4,8 @@ import { useStore } from "@nanostores/react";
 import { getThemeCssVars, type UiThemeMode } from "@/lib/uiTheme";
 
 // Nanostore atom — only source of truth for active builder theme.
-// Default: "dark".  Switch at runtime: $builderTheme.set("elder")
-export const $builderTheme = atom<UiThemeMode>("dark");
+// Default: "light".  Switch at runtime: $builderTheme.set("elder")
+export const $builderTheme = atom<UiThemeMode>("light");
 
 type Props = {
   children: React.ReactNode;
