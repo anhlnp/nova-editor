@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@nanostores/react";
 import {
@@ -39,6 +39,9 @@ import { DeployPanel } from "./DeployPanel";
 import { CollaboratorAvatars } from "./PresenceLayer";
 import { LangToggle } from "./LangToggle";
 import { TopbarMenu } from "./TopbarMenu";
+import { exportProject } from "@/features/export/export-project";
+import { importProject } from "@/features/import/import-project";
+import { exportHtml } from "@/features/export-html/export-html";
 import { UI_VARS as C } from "@/lib/uiTheme";
 import { useI18n } from "@/lib/i18n";
 import { $saveStatus } from "@/lib/saveQueue";
@@ -75,6 +78,37 @@ function SyncStatusChip() {
   );
 }
 
+function UnsavedChangesModal({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000 }}
+    >
+      <div style={{ width: 400, background: C.surface || "#1e293b", border: `1px solid ${C.border || "rgba(255,255,255,0.1)"}`, borderRadius: 14, padding: "28px 32px", display: "flex", flexDirection: "column", gap: 16, boxShadow: "0 24px 48px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.text || "#fff", fontFamily: C.font }}>Unsaved Changes</h2>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: C.textMuted || "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>×</button>
+        </div>
+
+        <p style={{ margin: 0, fontSize: 13, color: C.textMuted || "rgba(255,255,255,0.5)", fontFamily: C.font, lineHeight: 1.5 }}>
+          You have unsaved changes. Importing will replace the current project.
+        </p>
+
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
+          <button onClick={onClose}
+            style={{ padding: "8px 16px", borderRadius: 7, border: `1px solid ${C.border || "rgba(255,255,255,0.1)"}`, background: "transparent", color: C.textMuted || "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: C.font, cursor: "pointer" }}>
+            Cancel
+          </button>
+          <button onClick={onConfirm}
+            style={{ padding: "8px 22px", borderRadius: 7, border: "none", background: C.danger || "#dc2626", color: "#fff", fontSize: 13, fontFamily: C.font, fontWeight: 700, cursor: "pointer" }}>
+            Import
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type Props = {
   isDemo?: boolean;
 };
@@ -92,7 +126,7 @@ export function TopbarActions({ isDemo }: Props) {
   const canvasZoom = useStore($canvasZoom);
   const gridGuides = useStore($gridGuidesVisible);
   const cssPreview = useStore($cssPreviewOpen);
-  
+
   const isDirty = useStore($isDirty);
   const saveTriggerCount = useStore($saveTriggerCount);
 
@@ -106,6 +140,31 @@ export function TopbarActions({ isDemo }: Props) {
   const [exportOpen, setExportOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [deployOpen, setDeployOpen] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false);
+
+  const handleImportClick = () => {
+    if (isDirty) {
+      setImportConfirmOpen(true);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      importProject(content);
+    };
+    reader.readAsText(file);
+  };
 
   const handleSaveClick = useCallback(() => {
     if (isSaving) return;
@@ -122,7 +181,7 @@ export function TopbarActions({ isDemo }: Props) {
   // Update time elapsed label since last save
   useEffect(() => {
     if (lastSavedTime === null || isSaving || isDirty) return;
-    
+
     const updateLabel = () => {
       const diff = Date.now() - lastSavedTime;
       const seconds = Math.floor(diff / 1000);
@@ -135,7 +194,7 @@ export function TopbarActions({ isDemo }: Props) {
         setTimeLabel(`Saved (${minutes}m ago)`);
       }
     };
-    
+
     updateLabel();
     const interval = setInterval(updateLabel, 5000);
     return () => clearInterval(interval);
@@ -376,10 +435,10 @@ export function TopbarActions({ isDemo }: Props) {
                 background: isSaving
                   ? "rgba(255,255,255,0.06)"
                   : saveError
-                  ? "rgba(220,38,38,0.85)"
-                  : isDirty
-                  ? "rgba(5,150,105,0.85)"
-                  : "rgba(255,255,255,0.08)",
+                    ? "rgba(220,38,38,0.85)"
+                    : isDirty
+                      ? "rgba(5,150,105,0.85)"
+                      : "rgba(255,255,255,0.08)",
                 color: isSaving || (!isDirty && !saveError) ? C.textMuted : "#fff",
                 fontSize: 12,
                 fontFamily: C.font,
@@ -391,18 +450,18 @@ export function TopbarActions({ isDemo }: Props) {
               {isSaving
                 ? "Saving..."
                 : saveError
-                ? "Failed. Retry?"
-                : isDirty
-                ? "Save"
-                : lastSavedTime !== null
-                ? timeLabel
-                : "Save"}
+                  ? "Failed. Retry?"
+                  : isDirty
+                    ? "Save"
+                    : lastSavedTime !== null
+                      ? timeLabel
+                      : "Save"}
             </button>
           </>
         ) : (
           <>
             <SyncStatusChip />
-            {/* 2 — Export ▾ (HTML + React + Deploy) */}
+            {/* 2 — Export ▾ (HTML + React + Deploy + Import) */}
             <TopbarMenu
               trigger={t.builder.export}
               open={exportOpen}
@@ -412,6 +471,8 @@ export function TopbarActions({ isDemo }: Props) {
                 { label: t.builder.exportHtml, title: "Download as standalone HTML", href: meta ? `/api/export/${meta.id}` : "#", download: true },
                 { label: t.builder.exportReact, title: "Download as React component", href: meta ? `/api/export/${meta.id}/react` : "#", download: true },
                 { label: t.builder.deploy, title: "Deploy to hosting", onClick: () => setDeployOpen((v) => !v) },
+                { label: t.builder.exportProject, title: "Export project template file", onClick: () => exportProject(meta ? meta.name : "untitled") },
+                { label: t.builder.importProject, title: "Import a .nova project file", onClick: () => { setExportOpen(false); handleImportClick(); } },
               ]}
             />
 
@@ -439,14 +500,14 @@ export function TopbarActions({ isDemo }: Props) {
             />
 
             {/* 4 — Publish */}
-            {meta && (
+            {/* {meta && (
               <button
                 onClick={handlePublish}
                 style={{ ...btnBase, border: `1px solid ${published ? "rgba(5,150,105,0.45)" : "rgba(255,255,255,0.1)"}`, background: published ? "rgba(5,150,105,0.12)" : "transparent", color: published ? "#6ee7b7" : C.textMuted, transition: "all 0.15s" }}
               >
                 {published ? t.builder.copied : t.builder.publish}
               </button>
-            )}
+            )} */}
 
             {/* Preview Button */}
             {meta && (
@@ -477,10 +538,10 @@ export function TopbarActions({ isDemo }: Props) {
                 background: isSaving
                   ? "rgba(255,255,255,0.06)"
                   : saveError
-                  ? "rgba(220,38,38,0.85)"
-                  : isDirty
-                  ? "rgba(5,150,105,0.85)"
-                  : "rgba(255,255,255,0.08)",
+                    ? "rgba(220,38,38,0.85)"
+                    : isDirty
+                      ? "rgba(5,150,105,0.85)"
+                      : "rgba(255,255,255,0.08)",
                 color: isSaving || (!isDirty && !saveError) ? C.textMuted : "#fff",
                 fontSize: 12,
                 fontFamily: C.font,
@@ -492,12 +553,12 @@ export function TopbarActions({ isDemo }: Props) {
               {isSaving
                 ? "Saving..."
                 : saveError
-                ? "Failed. Retry?"
-                : isDirty
-                ? "Save"
-                : lastSavedTime !== null
-                ? timeLabel
-                : "Saved"}
+                  ? "Failed. Retry?"
+                  : isDirty
+                    ? "Save"
+                    : lastSavedTime !== null
+                      ? timeLabel
+                      : "Saved"}
             </button>
 
             {/* 6 — ✦ Generate */}
@@ -521,6 +582,26 @@ export function TopbarActions({ isDemo }: Props) {
         onCreate={handleCreate}
         onSaveAs={handleSaveAs}
       />
+
+      {/* Hidden file input for .nova import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".nova"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+
+      {/* Confirm modal when project has unsaved changes */}
+      {importConfirmOpen && (
+        <UnsavedChangesModal
+          onConfirm={() => {
+            setImportConfirmOpen(false);
+            fileInputRef.current?.click();
+          }}
+          onClose={() => setImportConfirmOpen(false)}
+        />
+      )}
     </>
   );
 }

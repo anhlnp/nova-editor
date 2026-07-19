@@ -29,47 +29,160 @@ const TAG: Record<string, string> = {
   Form: "form", WebhookForm: "form", Input: "input", Textarea: "textarea",
   Select: "select", Label: "label", Checkbox: "input",
   List: "ul", ListItem: "li", Separator: "hr",
-  // HeroUI replicas → semantic HTML tags
-  "heroui:HeroUIButton": "button", "heroui:HeroUIInput": "div",
-  "heroui:HeroUICard": "div", "heroui:HeroUISwitch": "div",
-  "heroui:HeroUIChip": "span", "heroui:HeroUIDivider": "hr",
-  "heroui:HeroUISpinner": "div", "heroui:HeroUICode": "code",
-  "heroui:HeroUIProgress": "div", "heroui:HeroUIUser": "div",
-  "heroui:HeroUIRow": "div", "heroui:HeroUICol": "div",
-  "heroui:HeroUIContainer": "div", "heroui:HeroUISection": "section",
-  "heroui:HeroUIFlexRow": "div", "heroui:HeroUISpacer": "div",
-  "heroui:HeroUIImage": "img", "heroui:HeroUIText": "p",
-  "heroui:HeroUIHeading": "h2", "heroui:HeroUILink": "a",
 };
 
-// Inline styles for HeroUI components in exported HTML.
-const HEROUI_EXPORT_STYLES: Record<string, (props: Record<string, unknown>) => string> = {
-  "heroui:HeroUIButton": (p) => {
-    const colors: Record<string, string> = { default: "#3f3f46", primary: "#006FEE", secondary: "#9353d3", success: "#17c964", warning: "#f5a524", danger: "#f31260" };
-    const bg = colors[String(p.color ?? "primary")] ?? "#006FEE";
-    return `display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14px;padding:0 16px;height:40px;border-radius:12px;border:none;background:${bg};color:#fff;cursor:pointer;font-family:system-ui,sans-serif;`;
+// Color maps matching HeroUI defaults
+const HEROUI_COLORS: Record<string, string> = {
+  default: "#3f3f46", primary: "#006FEE", secondary: "#9353d3",
+  success: "#17c964", warning: "#f5a524", danger: "#f31260",
+};
+
+const HEROUI_BG_COLORS: Record<string, string> = {
+  default: "rgba(63,63,70,0.2)", primary: "rgba(0,111,238,0.12)",
+  secondary: "rgba(147,83,211,0.12)", success: "rgba(23,201,100,0.12)",
+  warning: "rgba(245,165,36,0.12)", danger: "rgba(243,18,96,0.12)",
+};
+
+// Components that are fully self-rendered by a custom HTML builder (not inst.children walk)
+type HeroUIRenderer = (
+  iId: string,
+  ip: Record<string, unknown>,
+  children: string,
+  pad: string
+) => string;
+
+const HEROUI_RENDERERS: Record<string, HeroUIRenderer> = {
+  "heroui:HeroUIButton": (iId, ip, children) => {
+    const color = String(ip.color ?? "primary");
+    const variant = String(ip.variant ?? "solid");
+    const radius = String(ip.radius ?? "md");
+    const size = String(ip.size ?? "md");
+    const sizeMap: Record<string, string> = { sm: "32px", md: "40px", lg: "48px" };
+    const fontMap: Record<string, string> = { sm: "13px", md: "14px", lg: "16px" };
+    const padMap: Record<string, string> = { sm: "0 12px", md: "0 16px", lg: "0 24px" };
+    const radiusMap: Record<string, string> = { none: "0", sm: "6px", md: "12px", lg: "14px", full: "9999px" };
+    const bg = HEROUI_COLORS[color] ?? "#006FEE";
+    const bgLight = HEROUI_BG_COLORS[color] ?? "rgba(0,111,238,0.12)";
+    const isBordered = variant === "bordered";
+    const isLight = variant === "light" || variant === "flat" || variant === "faded";
+    const isGhost = variant === "ghost";
+    const bgStyle = isBordered || isGhost ? "transparent" : isLight ? bgLight : bg;
+    const colorStyle = (isBordered || isLight || isGhost) ? (HEROUI_COLORS[color] ?? "#006FEE") : "#fff";
+    const borderStyle = (isBordered || isGhost) ? `1px solid ${HEROUI_COLORS[color] ?? "#006FEE"}` : "none";
+    const content = children.trim() || "Button";
+    const style = `display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:${fontMap[size] ?? "14px"};padding:${padMap[size] ?? "0 16px"};height:${sizeMap[size] ?? "40px"};border-radius:${radiusMap[radius] ?? "12px"};border:${borderStyle};background:${bgStyle};color:${colorStyle};cursor:pointer;font-family:system-ui,sans-serif;text-decoration:none;white-space:nowrap;`;
+    return `<button ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIButton" style="${esc(style)}">${content}</button>\n`;
   },
+
+  "heroui:HeroUIInput": (iId, ip, _children, pad) => {
+    const label = String(ip.label ?? "Label");
+    const placeholder = String(ip.placeholder ?? "Enter value...");
+    const type = String(ip.type ?? "text");
+    const variant = String(ip.variant ?? "bordered");
+    const color = String(ip.color ?? "default");
+    const borderColor = HEROUI_COLORS[color] ?? "#3f3f46";
+    const isBordered = variant === "bordered" || variant === "faded";
+    const inputStyle = `width:100%;padding:10px 14px;border-radius:10px;border:${isBordered ? `1px solid ${borderColor}55` : "none"};background:${variant === "flat" || variant === "faded" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)"};color:#fafafa;font-size:14px;font-family:system-ui,sans-serif;outline:none;box-sizing:border-box;`;
+    const labelStyle = `font-size:12px;color:#a1a1aa;font-family:system-ui,sans-serif;margin-bottom:2px;`;
+    const wrapStyle = `display:flex;flex-direction:column;gap:4px;width:100%;`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIInput" style="${esc(wrapStyle)}">\n${pad}  <label style="${esc(labelStyle)}">${esc(label)}</label>\n${pad}  <input type="${esc(type)}" placeholder="${esc(placeholder)}" style="${esc(inputStyle)}">\n${pad}</div>\n`;
+  },
+
+  "heroui:HeroUISwitch": (iId, ip, children, pad) => {
+    const color = String(ip.color ?? "primary");
+    const isSelected = ip.isSelected === true || ip.isSelected === "true";
+    const trackColor = isSelected ? (HEROUI_COLORS[color] ?? "#006FEE") : "#3f3f46";
+    const thumbLeft = isSelected ? "calc(100% - 22px)" : "2px";
+    const trackStyle = `display:inline-flex;position:relative;width:44px;height:24px;border-radius:12px;background:${trackColor};transition:background .2s;flex-shrink:0;cursor:pointer;`;
+    const thumbStyle = `position:absolute;top:2px;left:${thumbLeft};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;`;
+    const wrapStyle = `display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:system-ui,sans-serif;color:#fafafa;`;
+    const label = children.trim() || "";
+    const labelHtml = label ? `<span style="font-size:14px;">${label}</span>` : "";
+    return `${pad}<label ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUISwitch" style="${esc(wrapStyle)}">\n${pad}  <span style="${esc(trackStyle)}"><span style="${esc(thumbStyle)}"></span></span>\n${pad}  ${labelHtml}\n${pad}</label>\n`;
+  },
+
+  "heroui:HeroUIChip": (iId, ip, children, pad) => {
+    const color = String(ip.color ?? "default");
+    const variant = String(ip.variant ?? "solid");
+    const size = String(ip.size ?? "md");
+    const bg = variant === "solid" ? (HEROUI_COLORS[color] ?? "#3f3f46") : (HEROUI_BG_COLORS[color] ?? "rgba(63,63,70,0.2)");
+    const textColor = variant === "solid" ? "#fff" : (HEROUI_COLORS[color] ?? "#fafafa");
+    const sizeMap: Record<string, string> = { sm: "10px", md: "12px", lg: "14px" };
+    const padMap: Record<string, string> = { sm: "2px 6px", md: "4px 10px", lg: "6px 14px" };
+    const style = `display:inline-flex;align-items:center;font-size:${sizeMap[size] ?? "12px"};padding:${padMap[size] ?? "4px 10px"};border-radius:9999px;background:${bg};color:${textColor};font-family:system-ui,sans-serif;white-space:nowrap;font-weight:500;`;
+    const content = children.trim() || "Chip";
+    return `${pad}<span ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIChip" style="${esc(style)}">${content}</span>\n`;
+  },
+
+  "heroui:HeroUIProgress": (iId, ip, _children, pad) => {
+    const color = String(ip.color ?? "primary");
+    const value = Math.max(0, Math.min(100, Number(ip.value) || 50));
+    const label = ip.label ? String(ip.label) : "";
+    const showValue = ip.showValueLabel === true;
+    const barColor = HEROUI_COLORS[color] ?? "#006FEE";
+    const trackStyle = `width:100%;height:6px;background:#27272a;border-radius:9999px;overflow:hidden;`;
+    const barStyle = `height:100%;width:${value}%;background:${barColor};border-radius:9999px;transition:width .3s;`;
+    const labelHtml = label ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px;color:#a1a1aa;font-family:system-ui,sans-serif;"><span>${esc(label)}</span>${showValue ? `<span>${value}%</span>` : ""}</div>` : "";
+    const wrapStyle = `display:flex;flex-direction:column;width:100%;`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIProgress" style="${esc(wrapStyle)}">\n${pad}  ${labelHtml}\n${pad}  <div style="${esc(trackStyle)}"><div style="${esc(barStyle)}"></div></div>\n${pad}</div>\n`;
+  },
+
+  "heroui:HeroUISpinner": (iId, ip, _children, pad) => {
+    const color = String(ip.color ?? "primary");
+    const size = String(ip.size ?? "md");
+    const sizeMap: Record<string, string> = { sm: "24px", md: "36px", lg: "48px" };
+    const spinColor = HEROUI_COLORS[color] ?? "#006FEE";
+    const sz = sizeMap[size] ?? "36px";
+    const label = ip.label ? String(ip.label) : "";
+    const style = `width:${sz};height:${sz};border:3px solid rgba(255,255,255,0.1);border-top-color:${spinColor};border-radius:50%;animation:nova-spin .8s linear infinite;`;
+    const labelHtml = label ? `<span style="font-size:13px;color:#a1a1aa;font-family:system-ui,sans-serif;">${esc(label)}</span>` : "";
+    const wrapStyle = `display:inline-flex;flex-direction:column;align-items:center;gap:8px;`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUISpinner" style="${esc(wrapStyle)}">\n${pad}  <div style="${esc(style)}"></div>\n${pad}  ${labelHtml}\n${pad}</div>\n`;
+  },
+
+  "heroui:HeroUIUser": (iId, ip, _children, pad) => {
+    const name = String(ip.name ?? "User Name");
+    const description = String(ip.description ?? "");
+    const avatarSrc = ip.avatarSrc ? String(ip.avatarSrc) : "";
+    const initials = name.split(" ").map((n: string) => n[0] ?? "").join("").slice(0, 2).toUpperCase();
+    const avatarStyle = `width:36px;height:36px;border-radius:50%;background:#3f3f46;color:#fafafa;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden;`;
+    const avatarHtml = avatarSrc
+      ? `<img src="${esc(avatarSrc)}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;">`
+      : initials;
+    const descHtml = description ? `<p style="font-size:12px;color:#a1a1aa;margin:0;">${esc(description)}</p>` : "";
+    const wrapStyle = `display:inline-flex;align-items:center;gap:10px;font-family:system-ui,sans-serif;color:#fafafa;`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIUser" style="${esc(wrapStyle)}">\n${pad}  <div style="${esc(avatarStyle)}">${avatarHtml}</div>\n${pad}  <div><p style="font-size:14px;font-weight:500;margin:0;">${esc(name)}</p>${descHtml}</div>\n${pad}</div>\n`;
+  },
+
+  "heroui:HeroUICode": (iId, ip, children, pad) => {
+    const color = String(ip.color ?? "default");
+    const textColor = color === "default" ? "#d4d4d8" : (HEROUI_COLORS[color] ?? "#d4d4d8");
+    const style = `font-family:ui-monospace,'Fira Code',monospace;font-size:14px;padding:2px 8px;border-radius:6px;background:rgba(63,63,70,0.25);color:${textColor};`;
+    const content = children.trim() || "code";
+    return `${pad}<code ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUICode" style="${esc(style)}">${content}</code>\n`;
+  },
+
+  "heroui:HeroUIDivider": (iId, _ip, _children, pad) => {
+    const style = `border:none;background:#27272a;height:1px;width:100%;margin:8px 0;display:block;`;
+    return `${pad}<hr ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIDivider" style="${esc(style)}">\n`;
+  },
+};
+
+// Layout container inline styles (no special inner HTML — just pass children through)
+const HEROUI_CONTAINER_STYLES: Record<string, (p: Record<string, unknown>) => string> = {
   "heroui:HeroUICard": () => "background:#18181b;border:1px solid #27272a;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.3);padding:16px;color:#fafafa;font-family:system-ui,sans-serif;",
   "heroui:HeroUIRow": (p) => `display:grid;grid-template-columns:repeat(12,1fr);gap:${p.gap ?? "16px"};width:100%;box-sizing:border-box;`,
   "heroui:HeroUICol": (p) => { const s = Math.max(1, Math.min(12, Number(p.span) || 6)); return `grid-column:span ${s}/span ${s};min-width:0;`; },
-  "heroui:HeroUIChip": () => "display:inline-flex;align-items:center;font-size:12px;padding:4px 10px;border-radius:9999px;background:#3f3f46;color:#fafafa;font-family:system-ui,sans-serif;",
-  "heroui:HeroUIProgress": (p) => { const v = Math.max(0, Math.min(100, Number(p.value) || 50)); return `width:100%;height:6px;background:#27272a;border-radius:9999px;overflow:hidden;--progress-w:${v}%;`; },
-  "heroui:HeroUIInput": () => "display:flex;flex-direction:column;gap:4px;font-family:system-ui,sans-serif;width:100%;",
-  "heroui:HeroUISpinner": () => "display:inline-flex;flex-direction:column;align-items:center;gap:8px;",
-  "heroui:HeroUICode": () => "font-family:ui-monospace,'Fira Code',monospace;font-size:14px;padding:2px 8px;border-radius:6px;background:rgba(63,63,70,0.25);color:#d4d4d8;",
-  "heroui:HeroUIUser": () => "display:inline-flex;align-items:center;gap:12px;font-family:system-ui,sans-serif;color:#fafafa;",
-  "heroui:HeroUIDivider": () => "border:none;background:#27272a;height:1px;width:100%;margin:8px 0;",
-  "heroui:HeroUISwitch": () => "display:inline-flex;align-items:center;gap:8px;font-family:system-ui,sans-serif;color:#fafafa;",
   "heroui:HeroUIContainer": (p) => {
-    const justifyMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around", evenly: "space-evenly" };
-    const alignMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch", baseline: "baseline" };
-    return `display:flex;flex-direction:${p.direction ?? "column"};justify-content:${justifyMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${alignMap[String(p.align ?? "stretch")] ?? "stretch"};gap:${p.gap ?? "0px"};padding:${p.padding ?? "16px"};flex-wrap:${p.wrap ?? "nowrap"};box-sizing:border-box;min-height:40px;width:100%;`;
+    const jMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around", evenly: "space-evenly" };
+    const aMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch", baseline: "baseline" };
+    return `display:flex;flex-direction:${p.direction ?? "column"};justify-content:${jMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${aMap[String(p.align ?? "stretch")] ?? "stretch"};gap:${p.gap ?? "0px"};padding:${p.padding ?? "16px"};flex-wrap:${p.wrap ?? "nowrap"};box-sizing:border-box;min-height:40px;width:100%;`;
   },
   "heroui:HeroUISection": (p) => `display:flex;flex-direction:column;width:100%;max-width:${p.maxWidth ?? "1200px"};margin:0 auto;padding:${p.padding ?? "48px 24px"};background:${p.background ?? "transparent"};box-sizing:border-box;min-height:80px;`,
   "heroui:HeroUIFlexRow": (p) => {
-    const justifyMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around" };
-    const alignMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
-    return `display:flex;flex-direction:row;gap:${p.gap ?? "12px"};justify-content:${justifyMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${alignMap[String(p.align ?? "center")] ?? "center"};flex-wrap:${p.wrap ?? "wrap"};width:100%;box-sizing:border-box;min-height:32px;`;
+    const jMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around" };
+    const aMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
+    return `display:flex;flex-direction:row;gap:${p.gap ?? "12px"};justify-content:${jMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${aMap[String(p.align ?? "center")] ?? "center"};flex-wrap:${p.wrap ?? "wrap"};width:100%;box-sizing:border-box;min-height:32px;`;
   },
   "heroui:HeroUISpacer": (p) => `height:${p.height ?? "24px"};width:100%;flex-shrink:0;`,
   "heroui:HeroUIImage": (p) => `width:${p.width ?? "100%"};height:${p.height ?? "auto"};object-fit:${p.objectFit ?? "cover"};border-radius:${p.borderRadius ?? "8px"};display:block;max-width:100%;`,
@@ -79,6 +192,17 @@ const HEROUI_EXPORT_STYLES: Record<string, (props: Record<string, unknown>) => s
     return `font-size:${sizes[Number(p.level ?? 2)] ?? "2rem"};font-weight:bold;text-align:${p.textAlign ?? "left"};color:${p.color ?? "inherit"};margin:0;line-height:1.3;`;
   },
   "heroui:HeroUILink": (p) => `color:${p.color ?? "#006FEE"};text-decoration:underline;cursor:pointer;`,
+};
+
+// Tag map for layout/passthrough HeroUI components
+const HEROUI_CONTAINER_TAG: Record<string, string> = {
+  "heroui:HeroUICard": "div",
+  "heroui:HeroUIRow": "div", "heroui:HeroUICol": "div",
+  "heroui:HeroUIContainer": "div", "heroui:HeroUISection": "section",
+  "heroui:HeroUIFlexRow": "div", "heroui:HeroUISpacer": "div",
+  "heroui:HeroUIImage": "img",
+  "heroui:HeroUIText": "p", "heroui:HeroUIHeading": "h2",
+  "heroui:HeroUILink": "a",
 };
 
 const VOID_TAGS = new Set(["img", "input", "hr", "br"]);
@@ -138,12 +262,71 @@ function renderInstance(
   const inst = data.instances.get(iId);
   if (!inst) return "";
   const ip = propMap.get(iId) ?? {};
+  const pad = "  ".repeat(indent);
+
+  // ── HeroUI: self-contained renderers (Button, Switch, Input, etc.) ────────
+  const heroRenderer = HEROUI_RENDERERS[inst.component];
+  if (heroRenderer) {
+    // Collect children HTML first (for components that may embed children, e.g. button label)
+    const childrenHtml = inst.children
+      .map((c) => {
+        if (c.type === "text") return esc(c.value);
+        if (c.type === "id") return renderInstance(data, propMap, c.value, indent + 1);
+        return "";
+      })
+      .join("");
+    return heroRenderer(iId, ip, childrenHtml, pad);
+  }
+
+  // ── HeroUI: layout/passthrough containers ─────────────────────────────────
+  const heroContainerStyle = HEROUI_CONTAINER_STYLES[inst.component];
+  if (heroContainerStyle) {
+    let tag = HEROUI_CONTAINER_TAG[inst.component] ?? "div";
+    // Dynamic heading tag
+    if (inst.component === "heroui:HeroUIHeading") {
+      tag = `h${ip.level ?? 2}`;
+    }
+    const styleStr = heroContainerStyle(ip);
+    const attrs: string[] = [
+      `${idAttribute}="${iId}"`,
+      `${componentAttribute}="${esc(inst.component)}"`,
+      `style="${esc(styleStr)}"`,
+    ];
+    // Image: self-closing
+    if (tag === "img") {
+      const src = ip.src ? String(ip.src) : "https://via.placeholder.com/400x250?text=Image";
+      attrs.push(`src="${esc(src)}" alt="${esc(String(ip.alt ?? "Image"))}"`);
+      return `${pad}<img ${attrs.join(" ")}>\n`;
+    }
+    // Link: add href
+    if (tag === "a") {
+      if (ip.href) attrs.push(`href="${esc(String(ip.href))}"`);
+      if (ip.target) attrs.push(`target="${esc(String(ip.target))}"`);
+    }
+    const children = inst.children
+      .map((c) => {
+        if (c.type === "text") return `${pad}  ${esc(c.value)}\n`;
+        if (c.type === "id") return renderInstance(data, propMap, c.value, indent + 1);
+        return "";
+      })
+      .join("");
+    // Fallback content for empty containers (e.g. HeroUIText, HeroUIHeading)
+    const fallbacks: Record<string, string> = {
+      "heroui:HeroUIText": "Text block",
+      "heroui:HeroUIHeading": `Heading ${ip.level ?? 2}`,
+      "heroui:HeroUILink": "Link text",
+    };
+    const inner = children || (fallbacks[inst.component] ? `${pad}  ${fallbacks[inst.component]}\n` : "");
+    return `${pad}<${tag} ${attrs.join(" ")}>\n${inner}${pad}</${tag}>\n`;
+  }
+
+  // ── Standard component rendering ──────────────────────────────────────────
   let tag = TAG[inst.component] ?? "div";
-  if (inst.component === "heroui:HeroUIHeading") {
+  if (inst.component === "Heading") {
     const level = ip["level"] ?? 2;
     tag = `h${level}`;
   }
-  const pad = "  ".repeat(indent);
+
   const attrs: string[] = [
     `${idAttribute}="${iId}"`,
     `${componentAttribute}="${esc(inst.component)}"`,
@@ -170,18 +353,12 @@ function renderInstance(
   if (VOID_TAGS.has(tag)) return `${pad}<${tag} ${attrs.join(" ")}>\n`;
 
   if (tag === "form") {
-    // caller decides wiring via projectId; handled in the document assembler
     if (ip["action"]) attrs.push(`action="${esc(String(ip["action"]))}"`);
     attrs.push(`method="${esc(String(ip["method"] ?? "get"))}"`);
   }
   // Inline style prop (e.g. from Tailwind paste M7) travels through.
   if (typeof ip["style"] === "string" && ip["style"]) {
     attrs.push(`style="${esc(ip["style"] as string)}"`);
-  }
-  // HeroUI component inline styles for export
-  const heroStyleFn = HEROUI_EXPORT_STYLES[inst.component];
-  if (heroStyleFn && !ip["style"]) {
-    attrs.push(`style="${esc(heroStyleFn(ip))}"`);
   }
 
   const children = inst.children
@@ -316,6 +493,7 @@ export function exportPageToHtml(data: WebstudioData, page: Page, opts: ExportOp
     "  <style>",
     "    *, *::before, *::after { box-sizing: border-box; }",
     "    body { margin: 0; }",
+    "    @keyframes nova-spin { to { transform: rotate(360deg); } }",
     css.fonts,
     css.presets,
     css.user,
