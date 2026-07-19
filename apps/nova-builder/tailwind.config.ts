@@ -1,14 +1,45 @@
 import type { Config } from "tailwindcss";
-import { heroui } from "@heroui/react";
 
 const config: Config = {
   content: [
     "./src/**/*.{ts,tsx}",
-    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
+        border: "var(--ui-border)",
+        input: "var(--ui-input-border)",
+        ring: "var(--ui-accent)",
+        background: "var(--ui-bg)",
+        foreground: "var(--ui-text)",
+        primary: {
+          DEFAULT: "var(--ui-accent)",
+          foreground: "#ffffff",
+        },
+        secondary: {
+          DEFAULT: "var(--ui-surface)",
+          foreground: "var(--ui-text)",
+        },
+        destructive: {
+          DEFAULT: "var(--ui-danger)",
+          foreground: "#ffffff",
+        },
+        muted: {
+          DEFAULT: "var(--ui-muted)",
+          foreground: "var(--ui-text-muted)",
+        },
+        accent: {
+          DEFAULT: "var(--ui-hover-bg)",
+          foreground: "var(--ui-text)",
+        },
+        popover: {
+          DEFAULT: "var(--ui-card)",
+          foreground: "var(--ui-text)",
+        },
+        card: {
+          DEFAULT: "var(--ui-card)",
+          foreground: "var(--ui-text)",
+        },
         nova: {
           300: "#a78bfa",
           400: "#8b5cf6",
@@ -17,10 +48,15 @@ const config: Config = {
           700: "#5b21b6",
         },
       },
+      borderRadius: {
+        lg: "var(--radius-lg)",
+        md: "calc(var(--radius-lg) - 2px)",
+        sm: "calc(var(--radius-lg) - 4px)",
+      },
     },
   },
   darkMode: "class",
-  plugins: [heroui()],
+  plugins: [],
 };
 
 export default config;

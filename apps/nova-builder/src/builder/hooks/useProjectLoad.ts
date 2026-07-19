@@ -24,7 +24,7 @@ import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/temp
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import { repeatListMeta } from "@/canvas/repeat-list";
-import { heroUIMetas } from "@/canvas/heroui-components";
+import { shadcnMetas } from "@/canvas/shadcn-components";
 
 type ProjectApiResponse = {
   id: string;
@@ -97,11 +97,16 @@ export function useProjectLoad(projectId: string, isDemo: boolean) {
           components: {},
           metas: { RepeatList: repeatListMeta },
         });
-        // HeroUI replica components — metas only (canvas renders the actual components)
+        // shadcn visual components — metas only
+        const cleanMetas: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(shadcnMetas)) {
+          const cleanKey = key.startsWith("Shadcn") ? key.substring(6) : key;
+          cleanMetas[cleanKey] = value;
+        }
         registerComponentLibrary({
-          namespace: "heroui",
+          namespace: "shadcn",
           components: {},
-          metas: heroUIMetas as Record<string, import("@webstudio-is/sdk").WsComponentMeta>,
+          metas: cleanMetas as Record<string, import("@webstudio-is/sdk").WsComponentMeta>,
         });
 
         const emitter = new NanoEventsSyncEmitter();

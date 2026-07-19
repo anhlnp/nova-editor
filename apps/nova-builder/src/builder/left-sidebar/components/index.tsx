@@ -5,8 +5,7 @@ import { $registeredComponentMetas, $selectedInstanceSelector } from "@/lib/nano
 import { updateData } from "@/lib/transactions";
 import { $pages, $instances } from "@/lib/data-stores";
 import { useDraggable, type DropTarget } from "./useDraggable";
-import { registry, getRegistry } from "./ComponentRegistry";
-import { Input, ScrollShadow } from "@heroui/react";
+import { getRegistry } from "./ComponentRegistry";
 
 // ── Lazy Render Component Preview ───────────────────────────────────────────
 function LazyComponentPreview({ children }: { children: React.ReactNode }) {
@@ -21,7 +20,7 @@ function LazyComponentPreview({ children }: { children: React.ReactNode }) {
           observer.disconnect();
         }
       },
-      { rootMargin: "80px" }
+      { rootMargin: "100px" }
     );
 
     if (ref.current) {
@@ -32,12 +31,48 @@ function LazyComponentPreview({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div ref={ref} className="w-full flex items-center justify-center min-h-[60px]">
+    <div ref={ref} className="w-full flex items-center justify-center min-h-[50px]">
       {isVisible ? children : (
         <div className="flex flex-col items-center justify-center gap-2 w-full py-4">
-          <div className="w-8 h-8 rounded-full border-2 border-default-200 border-t-default-400 animate-spin" />
+          <div className="w-6 h-6 rounded-full border-2 border-border border-t-primary animate-spin" />
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Constraint & Scaling Visual Component Preview ────────────────────────────
+function ComponentPreview({ id, children }: { id: string; children: React.ReactNode }) {
+  // Identify large components that need to scale down to fit the preview card
+  const isLarge = [
+    "shadcn:Sidebar",
+    "shadcn:Table",
+    "shadcn:DataTable",
+    "shadcn:Dialog",
+    "shadcn:AlertDialog",
+    "shadcn:Drawer",
+    "shadcn:Sheet",
+    "shadcn:Carousel",
+    "shadcn:Command",
+    "shadcn:Row",
+    "shadcn:Row2Cols",
+    "shadcn:Row3Cols",
+    "shadcn:Row4Cols",
+    "shadcn:Calendar"
+  ].includes(id);
+
+  const scaleClass = isLarge ? "scale-[0.62]" : "scale-[0.88]";
+
+  return (
+    <div className="w-full h-[120px] flex items-center justify-center relative overflow-hidden bg-muted/20 border-b border-border/40 p-4 select-none pointer-events-none">
+      {/* Light dot grid background for the playground visual look */}
+      <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.08] bg-[radial-gradient(ellipse_at_center,_var(--ui-text)_1px,_transparent_1px)] bg-[size:10px_10px]" />
+      
+      <div className={`transform ${scaleClass} origin-center max-w-full max-h-full flex items-center justify-center transition-all duration-300`}>
+        <LazyComponentPreview>
+          {children}
+        </LazyComponentPreview>
+      </div>
     </div>
   );
 }
@@ -51,7 +86,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       viewBox="0 0 24 24"
       strokeWidth={2.5}
       stroke="currentColor"
-      className={`w-3 h-3 text-default-500 transition-transform duration-200 ${expanded ? "transform rotate-90" : ""}`}
+      className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${expanded ? "transform rotate-90" : ""}`}
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
     </svg>
@@ -59,11 +94,8 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
 }
 
 export function ComponentsPanel() {
-  const registeredComponentMetas = useStore($registeredComponentMetas);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  // Track collapsible categories. Default to expanded (false means not collapsed)
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   // Insertion helper logic
@@ -76,12 +108,6 @@ export function ComponentsPanel() {
       console.error("[builder] insertComponent error: No pages found!");
       return;
     }
-
-    console.log("[builder] insertComponent target resolve:", {
-      componentName,
-      dropTarget,
-      selector,
-    });
 
     const activePage = pages.pages ? pages.pages.get(pages.homePageId) : null;
     if (!activePage) {
@@ -114,7 +140,7 @@ export function ComponentsPanel() {
       const selectedId = selector[0];
       const targetInstance = instances.get(selectedId);
       if (targetInstance) {
-        if (targetInstance.component === "heroui:HeroUICol" || targetInstance.component === "heroui:HeroUIRow") {
+        if (targetInstance.component === "shadcn:Col" || targetInstance.component === "shadcn:Row") {
           parentId = selectedId;
           insertIdx = targetInstance.children.length;
         } else {
@@ -145,83 +171,38 @@ export function ComponentsPanel() {
     const newId = nanoid();
     const regEntry = getRegistry().find((r) => r.id === componentName);
 
-    // Build instance based on registry entry or fall back to default builder
-    const newInstance = regEntry ? regEntry.createInstance(newId) : {
-      type: "instance" as const,
-      id: newId,
-      component: componentName,
-      label: componentName.replace("heroui:", ""),
-      children: [],
+    // Build instance structure using single-source-of-truth registry
+    const creationResult = regEntry ? regEntry.createInstance(newId) : {
+      instance: {
+        type: "instance" as const,
+        id: newId,
+        component: componentName,
+        label: componentName.replace("shadcn:", ""),
+        children: [],
+      }
     };
 
-    // Composite components handling (Rows/Cols layout logic)
-    if (componentName === "heroui:HeroUI2Cols" || componentName === "heroui:HeroUI3Cols" || componentName === "heroui:HeroUI4Cols") {
-      const colCount = componentName === "heroui:HeroUI2Cols" ? 2 : componentName === "heroui:HeroUI3Cols" ? 3 : 4;
-      const spans = colCount === 2 ? [6, 6] : colCount === 3 ? [4, 4, 4] : [3, 3, 3, 3];
-      const rowId = newId;
+    const newInstance = creationResult.instance;
 
-      updateData(({ instances: draft, props }) => {
-        // 1. Create Row
-        draft.set(rowId, {
-          type: "instance" as const,
-          id: rowId,
-          component: "heroui:HeroUIRow",
-          label: `${colCount} Columns Row`,
-          children: [],
-        });
-
-        // 2. Create Columns
-        const rowChildren: Array<{ type: "id"; value: string }> = [];
-        spans.forEach((span, index) => {
-          const id = nanoid();
-          rowChildren.push({ type: "id", value: id });
-          draft.set(id, {
-            type: "instance" as const,
-            id,
-            component: "heroui:HeroUICol",
-            label: `Column ${index + 1}`,
-            children: [],
-          });
-
-          const propId = `${id}:span`;
-          props.set(propId, {
-            id: propId,
-            instanceId: id,
-            name: "span",
-            type: "number" as const,
-            value: span,
-          } as Parameters<typeof props.set>[1]);
-        });
-
-        // Update Row children in draft
-        const rowInstance = draft.get(rowId);
-        if (rowInstance) {
-          draft.set(rowId, { ...rowInstance, children: rowChildren });
-        }
-
-        // 3. Insert Row into parent children
-        if (parentId) {
-          const parent = draft.get(parentId);
-          if (parent) {
-            const newChildren = [...parent.children];
-            const child = { type: "id" as const, value: rowId };
-            if (insertIdx !== null && insertIdx >= 0) {
-              newChildren.splice(insertIdx, 0, child);
-            } else {
-              newChildren.push(child);
-            }
-            draft.set(parentId, { ...parent, children: newChildren });
-          }
-        }
-      });
-
-      $selectedInstanceSelector.set([rowId]);
-      return;
-    }
-
-    // Default simple component insertion
-    updateData(({ instances: draft }) => {
+    updateData(({ instances: draft, props }) => {
+      // 1. Insert main instance
       draft.set(newId, newInstance as Parameters<typeof draft.set>[1]);
+
+      // 2. Insert child instances if composite component
+      if (creationResult.childInstances) {
+        creationResult.childInstances.forEach((child) => {
+          draft.set(child.id, child as Parameters<typeof draft.set>[1]);
+        });
+      }
+
+      // 3. Set default property metadata values if composite component
+      if (creationResult.props) {
+        Object.entries(creationResult.props).forEach(([propId, propVal]) => {
+          props.set(propId, propVal as Parameters<typeof props.set>[1]);
+        });
+      }
+
+      // 4. Update parent element's children list
       if (parentId) {
         const parent = draft.get(parentId);
         if (parent) {
@@ -249,31 +230,32 @@ export function ComponentsPanel() {
     startDrag(componentName, e.clientX, e.clientY);
   };
 
-  // Filter components registry
+  // Filter components registry supporting tags, categories, keywords, aliases
   const filteredRegistry = useMemo(() => {
     const registryList = getRegistry();
     if (!searchQuery) return registryList;
     const q = searchQuery.toLowerCase();
     return registryList.filter(
       (item) =>
-        item.name.toLowerCase().includes(q) ||
+        item.displayName.toLowerCase().includes(q) ||
         item.description.toLowerCase().includes(q) ||
-        item.keywords.some((kw) => kw.toLowerCase().includes(q))
+        item.category.toLowerCase().includes(q) ||
+        item.keywords.some((kw) => kw.toLowerCase().includes(q)) ||
+        (item.tags && item.tags.some((tag) => tag.toLowerCase().includes(q)))
     );
   }, [searchQuery]);
 
-  // Group by category
+  // Group components by shadcn design system categories
   const categoriesMap = useMemo(() => {
-    const map: Record<string, typeof registry> = {
-      General: [],
-      Forms: [],
-      "Data Display": [],
+    const map: Record<string, ReturnType<typeof getRegistry>> = {
+      Inputs: [],
       Navigation: [],
-      Feedback: [],
       Overlay: [],
       Layout: [],
-      Utilities: [],
-      Dynamic: [],
+      Display: [],
+      Typography: [],
+      Feedback: [],
+      Advanced: [],
     };
 
     filteredRegistry.forEach((item) => {
@@ -295,40 +277,38 @@ export function ComponentsPanel() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background border-r border-divider select-none relative overflow-hidden">
-      {/* Header & Search */}
-      <div className="p-3.5 flex flex-col gap-2 border-b border-divider bg-background/50 backdrop-blur-md z-10">
+    <div className="flex flex-col h-full bg-background border-r border-border select-none relative overflow-hidden font-sans">
+      {/* Header & Search (V0.dev / Figma assets style) */}
+      <div className="p-4 flex flex-col gap-2.5 border-b border-border bg-background/60 backdrop-blur-md z-10">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-default-500">Insert Components</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Components Library</span>
         </div>
-        <Input
-          size="sm"
-          placeholder="Search components..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          isClearable
-          onClear={() => setSearchQuery("")}
-          classNames={{
-            inputWrapper: "bg-default-100/50 hover:bg-default-100 border border-divider/60 hover:border-divider focus-within:border-primary transition-colors",
-            input: "text-xs",
-          }}
-          startContent={
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-4 h-4 text-default-400"
+        <div className="relative flex items-center">
+          <span className="absolute left-3 text-xs text-muted-foreground/70 pointer-events-none">🔍</span>
+          <input
+            type="text"
+            placeholder="Search components..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-10 py-1.5 bg-muted/40 hover:bg-muted/70 focus:bg-background border border-border/80 focus:border-primary/60 rounded-md text-xs text-foreground placeholder:text-muted-foreground/60 transition-all outline-none"
+          />
+          {searchQuery ? (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 text-[10px] text-muted-foreground hover:text-foreground font-bold"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.602 10.602z" />
-            </svg>
-          }
-        />
+              ✕
+            </button>
+          ) : (
+            <span className="absolute right-3 text-[9px] text-muted-foreground/50 border border-border/60 px-1 rounded select-none">
+              ⌘K
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Component Explorer List */}
-      <ScrollShadow className="flex-1 p-3 flex flex-col gap-4 overflow-y-auto">
+      <div className="flex-1 p-4 flex flex-col gap-4.5 overflow-y-auto custom-scrollbar">
         {Object.entries(categoriesMap).map(([category, items]) => {
           if (items.length === 0) return null;
           const isCollapsed = !!collapsedCategories[category];
@@ -338,30 +318,31 @@ export function ComponentsPanel() {
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(category)}
-                className="flex items-center justify-between w-full py-1 text-left hover:opacity-80 transition-opacity"
+                className="flex items-center justify-between w-full py-1 text-left hover:opacity-85 transition-opacity"
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <ChevronIcon expanded={!isCollapsed} />
-                  <span className="text-xs font-semibold text-default-600 tracking-wide">{category}</span>
+                  <span className="text-xs font-semibold text-foreground/80 tracking-wide">{category}</span>
                 </div>
-                <span className="text-[10px] text-default-400 bg-default-100 px-1.5 py-0.5 rounded-full font-medium">
+                <span className="text-[9px] text-muted-foreground bg-muted/60 border border-border/50 px-1.5 py-0.5 rounded-full font-semibold">
                   {items.length}
                 </span>
               </button>
 
               {/* Grid of Preview Cards */}
               {!isCollapsed && (
-                <div className="grid grid-cols-1 gap-3.5 mt-1">
+                <div className="grid grid-cols-1 gap-3.5 mt-1.5">
                   {items.map((item) => {
                     const isSelected = selectedId === item.id;
 
                     return (
                       <div
                         key={item.id}
-                        className={`group relative rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden flex flex-col bg-background/40 backdrop-blur-md select-none ${isSelected
-                          ? "border-primary bg-primary-50/10 shadow-[0_0_12px_rgba(0,111,238,0.2)]"
-                          : "border-divider hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50 hover:scale-[1.02] transform"
-                          }`}
+                        className={`group relative rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden flex flex-col bg-card select-none ${
+                          isSelected
+                            ? "border-primary bg-primary/5 shadow-[0_0_12px_rgba(124,58,237,0.15)]"
+                            : "border-border hover:shadow-md hover:border-primary/50 hover:scale-[1.02] transform active:scale-[0.98]"
+                        }`}
                         onClick={() => {
                           setSelectedId(item.id);
                         }}
@@ -370,28 +351,24 @@ export function ComponentsPanel() {
                         }}
                         onMouseDown={(e) => handleMouseDown(e, item.id)}
                       >
-                        {/* Real Rendered Visual Preview Wrapper */}
-                        <div className="w-full min-h-[110px] flex items-center justify-center p-4 relative overflow-hidden bg-default-50/30 border-b border-divider/40">
-                          <div className="transform scale-[0.85] origin-center max-w-full max-h-full flex items-center justify-center pointer-events-none select-none">
-                            <LazyComponentPreview>
-                              {item.preview}
-                            </LazyComponentPreview>
-                          </div>
-                        </div>
+                        {/* Scaled visual preview element */}
+                        <ComponentPreview id={item.id}>
+                          {item.preview()}
+                        </ComponentPreview>
 
                         {/* Metadata Details */}
-                        <div className="p-3 flex flex-col gap-0.5 bg-background/25">
-                          <div className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+                        <div className="p-3.5 flex flex-col gap-0.5 bg-card/60 border-t border-border/10">
+                          <div className="text-xs font-semibold flex items-center gap-1.5 text-foreground leading-none">
                             {isSelected ? (
                               <>
-                                <span className="text-primary text-[11px] font-bold">✓</span>
-                                <span className="text-primary">{item.name}</span>
+                                <span className="text-primary text-[10px] font-bold">✓</span>
+                                <span className="text-primary">{item.displayName}</span>
                               </>
                             ) : (
-                              item.name
+                              item.displayName
                             )}
                           </div>
-                          <p className="text-[10px] text-default-400 line-clamp-2 leading-relaxed">
+                          <p className="text-[10px] text-muted-foreground line-clamp-1 mt-1 leading-normal font-medium">
                             {item.description}
                           </p>
                         </div>
@@ -403,9 +380,9 @@ export function ComponentsPanel() {
             </div>
           );
         })}
-      </ScrollShadow>
+      </div>
 
-      {/* Floating Draggable Ghost Preview */}
+      {/* Floating Drag Ghost Preview */}
       {isDragging && draggedComponent && (
         <div
           className="fixed pointer-events-none z-50 bg-primary/20 border border-primary text-primary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-sm"
@@ -415,7 +392,7 @@ export function ComponentsPanel() {
           }}
         >
           <span>➕</span>
-          <span>{draggedComponent.replace("heroui:HeroUI", "").replace("heroui:", "")}</span>
+          <span>{draggedComponent.replace("shadcn:", "")}</span>
         </div>
       )}
     </div>

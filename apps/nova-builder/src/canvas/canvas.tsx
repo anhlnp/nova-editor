@@ -44,7 +44,7 @@ import { useCanvasStore } from "@/lib/sync-stores";
 import { createInstanceElement } from "./elements";
 import { RepeatList, repeatListMeta } from "./repeat-list";
 import { Slot, slotMeta } from "./slot";
-import { heroUIComponents, heroUIMetas } from "./heroui-components";
+import { shadcnComponents, shadcnMetas } from "./shadcn-components";
 import { SelectionOverlay } from "./SelectionOverlay";
 import { TextEditOverlay } from "./TextEditOverlay";
 import { initDragReparent } from "./dragReparent";
@@ -176,11 +176,21 @@ export const Canvas = () => {
       components: { RepeatList, Slot } as Record<string, unknown>,
       metas: { RepeatList: repeatListMeta, Slot: slotMeta },
     });
-    // HeroUI visual components — replica components styled like HeroUI
+    // shadcn visual components
+    const cleanComponents: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(shadcnComponents)) {
+      const cleanKey = key.startsWith("Shadcn") ? key.substring(6) : key;
+      cleanComponents[cleanKey] = value;
+    }
+    const cleanMetas: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(shadcnMetas)) {
+      const cleanKey = key.startsWith("Shadcn") ? key.substring(6) : key;
+      cleanMetas[cleanKey] = value;
+    }
     registerComponentLibrary({
-      namespace: "heroui",
-      components: heroUIComponents,
-      metas: heroUIMetas as Record<string, import("@webstudio-is/sdk").WsComponentMeta>,
+      namespace: "shadcn",
+      components: cleanComponents,
+      metas: cleanMetas as Record<string, import("@webstudio-is/sdk").WsComponentMeta>,
     });
     setLibrariesRegistered(true);
   }, [librariesRegistered]);

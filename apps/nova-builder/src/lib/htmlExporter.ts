@@ -31,178 +31,159 @@ const TAG: Record<string, string> = {
   List: "ul", ListItem: "li", Separator: "hr",
 };
 
-// Color maps matching HeroUI defaults
-const HEROUI_COLORS: Record<string, string> = {
-  default: "#3f3f46", primary: "#006FEE", secondary: "#9353d3",
-  success: "#17c964", warning: "#f5a524", danger: "#f31260",
+// Color maps matching shadcn defaults
+const SHADCN_COLORS: Record<string, string> = {
+  default: "#18181b", primary: "#7c3aed", secondary: "#27272a",
+  destructive: "#ef4444", outline: "transparent", ghost: "transparent",
 };
 
-const HEROUI_BG_COLORS: Record<string, string> = {
-  default: "rgba(63,63,70,0.2)", primary: "rgba(0,111,238,0.12)",
-  secondary: "rgba(147,83,211,0.12)", success: "rgba(23,201,100,0.12)",
-  warning: "rgba(245,165,36,0.12)", danger: "rgba(243,18,96,0.12)",
-};
-
-// Components that are fully self-rendered by a custom HTML builder (not inst.children walk)
-type HeroUIRenderer = (
+type ShadcnRenderer = (
   iId: string,
   ip: Record<string, unknown>,
   children: string,
   pad: string
 ) => string;
 
-const HEROUI_RENDERERS: Record<string, HeroUIRenderer> = {
-  "heroui:HeroUIButton": (iId, ip, children) => {
-    const color = String(ip.color ?? "primary");
-    const variant = String(ip.variant ?? "solid");
-    const radius = String(ip.radius ?? "md");
-    const size = String(ip.size ?? "md");
-    const sizeMap: Record<string, string> = { sm: "32px", md: "40px", lg: "48px" };
-    const fontMap: Record<string, string> = { sm: "13px", md: "14px", lg: "16px" };
-    const padMap: Record<string, string> = { sm: "0 12px", md: "0 16px", lg: "0 24px" };
-    const radiusMap: Record<string, string> = { none: "0", sm: "6px", md: "12px", lg: "14px", full: "9999px" };
-    const bg = HEROUI_COLORS[color] ?? "#006FEE";
-    const bgLight = HEROUI_BG_COLORS[color] ?? "rgba(0,111,238,0.12)";
-    const isBordered = variant === "bordered";
-    const isLight = variant === "light" || variant === "flat" || variant === "faded";
-    const isGhost = variant === "ghost";
-    const bgStyle = isBordered || isGhost ? "transparent" : isLight ? bgLight : bg;
-    const colorStyle = (isBordered || isLight || isGhost) ? (HEROUI_COLORS[color] ?? "#006FEE") : "#fff";
-    const borderStyle = (isBordered || isGhost) ? `1px solid ${HEROUI_COLORS[color] ?? "#006FEE"}` : "none";
+const SHADCN_RENDERERS: Record<string, ShadcnRenderer> = {
+  "shadcn:Button": (iId, ip, children) => {
+    const variant = String(ip.variant ?? "default");
+    const size = String(ip.size ?? "default");
+    const sizeMap: Record<string, string> = { sm: "32px", default: "38px", lg: "44px", icon: "38px" };
+    const fontMap: Record<string, string> = { sm: "12px", default: "14px", lg: "16px", icon: "14px" };
+    const padMap: Record<string, string> = { sm: "0 12px", default: "0 16px", lg: "0 24px", icon: "0" };
+    const widthMap: Record<string, string> = { icon: "38px" };
+    const bg = SHADCN_COLORS[variant] ?? "#7c3aed";
+    const text = variant === "outline" || variant === "ghost" ? "var(--ui-text)" : "#fff";
+    const border = variant === "outline" ? "1px solid var(--ui-border)" : "none";
     const content = children.trim() || "Button";
-    const style = `display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:${fontMap[size] ?? "14px"};padding:${padMap[size] ?? "0 16px"};height:${sizeMap[size] ?? "40px"};border-radius:${radiusMap[radius] ?? "12px"};border:${borderStyle};background:${bgStyle};color:${colorStyle};cursor:pointer;font-family:system-ui,sans-serif;text-decoration:none;white-space:nowrap;`;
-    return `<button ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIButton" style="${esc(style)}">${content}</button>\n`;
+    const style = `display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500;font-size:${fontMap[size] ?? "14px"};padding:${padMap[size] ?? "0 16px"};height:${sizeMap[size] ?? "38px"};${widthMap[size] ? `width:${widthMap[size]};` : ""}border-radius:6px;border:${border};background:${bg};color:${text};cursor:pointer;font-family:system-ui,sans-serif;text-decoration:none;white-space:nowrap;`;
+    return `<button ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Button" style="${esc(style)}">${content}</button>\n`;
   },
 
-  "heroui:HeroUIInput": (iId, ip, _children, pad) => {
-    const label = String(ip.label ?? "Label");
-    const placeholder = String(ip.placeholder ?? "Enter value...");
+  "shadcn:Input": (iId, ip, _children, pad) => {
+    const placeholder = String(ip.placeholder ?? "Search...");
     const type = String(ip.type ?? "text");
-    const variant = String(ip.variant ?? "bordered");
-    const color = String(ip.color ?? "default");
-    const borderColor = HEROUI_COLORS[color] ?? "#3f3f46";
-    const isBordered = variant === "bordered" || variant === "faded";
-    const inputStyle = `width:100%;padding:10px 14px;border-radius:10px;border:${isBordered ? `1px solid ${borderColor}55` : "none"};background:${variant === "flat" || variant === "faded" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)"};color:#fafafa;font-size:14px;font-family:system-ui,sans-serif;outline:none;box-sizing:border-box;`;
-    const labelStyle = `font-size:12px;color:#a1a1aa;font-family:system-ui,sans-serif;margin-bottom:2px;`;
-    const wrapStyle = `display:flex;flex-direction:column;gap:4px;width:100%;`;
-    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIInput" style="${esc(wrapStyle)}">\n${pad}  <label style="${esc(labelStyle)}">${esc(label)}</label>\n${pad}  <input type="${esc(type)}" placeholder="${esc(placeholder)}" style="${esc(inputStyle)}">\n${pad}</div>\n`;
+    const style = `width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--ui-border);background:var(--ui-bg);color:var(--ui-text);font-size:14px;font-family:system-ui,sans-serif;outline:none;box-sizing:border-box;`;
+    return `${pad}<input ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Input" type="${esc(type)}" placeholder="${esc(placeholder)}" style="${esc(style)}">\n`;
   },
 
-  "heroui:HeroUISwitch": (iId, ip, children, pad) => {
-    const color = String(ip.color ?? "primary");
-    const isSelected = ip.isSelected === true || ip.isSelected === "true";
-    const trackColor = isSelected ? (HEROUI_COLORS[color] ?? "#006FEE") : "#3f3f46";
-    const thumbLeft = isSelected ? "calc(100% - 22px)" : "2px";
-    const trackStyle = `display:inline-flex;position:relative;width:44px;height:24px;border-radius:12px;background:${trackColor};transition:background .2s;flex-shrink:0;cursor:pointer;`;
-    const thumbStyle = `position:absolute;top:2px;left:${thumbLeft};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;`;
-    const wrapStyle = `display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:system-ui,sans-serif;color:#fafafa;`;
+  "shadcn:Textarea": (iId, ip, _children, pad) => {
+    const placeholder = String(ip.placeholder ?? "Type message...");
+    const style = `width:100%;min-height:80px;padding:8px 12px;border-radius:6px;border:1px solid var(--ui-border);background:var(--ui-bg);color:var(--ui-text);font-size:14px;font-family:system-ui,sans-serif;outline:none;box-sizing:border-box;resize:vertical;`;
+    return `${pad}<textarea ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Textarea" placeholder="${esc(placeholder)}" style="${esc(style)}"></textarea>\n`;
+  },
+
+  "shadcn:Checkbox": (iId, ip, children, pad) => {
+    const isChecked = ip.isChecked === true || ip.isChecked === "true";
+    const bg = isChecked ? "var(--ui-accent)" : "transparent";
+    const border = isChecked ? "var(--ui-accent)" : "var(--ui-border)";
+    const checkColor = isChecked ? "#fff" : "transparent";
+    const label = children.trim() || "Accept terms";
+    const boxStyle = `width:16px;height:16px;border-radius:4px;border:1px solid ${border};background:${bg};display:inline-flex;align-items:center;justify-content:center;color:${checkColor};font-size:10px;font-weight:bold;flex-shrink:0;`;
+    const wrapStyle = `display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:system-ui,sans-serif;color:var(--ui-text);`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Checkbox" style="${esc(wrapStyle)}">\n${pad}  <span style="${esc(boxStyle)}">✓</span>\n${pad}  <span style="font-size:14px;font-weight:500;">${esc(label)}</span>\n${pad}</div>\n`;
+  },
+
+  "shadcn:Switch": (iId, ip, children, pad) => {
+    const isChecked = ip.isChecked === true || ip.isChecked === "true";
+    const trackColor = isChecked ? "var(--ui-accent)" : "var(--ui-border)";
+    const thumbLeft = isChecked ? "calc(100% - 18px)" : "2px";
+    const trackStyle = `display:inline-flex;position:relative;width:36px;height:20px;border-radius:10px;background:${trackColor};transition:background .2s;flex-shrink:0;cursor:pointer;`;
+    const thumbStyle = `position:absolute;top:2px;left:${thumbLeft};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;`;
+    const wrapStyle = `display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:system-ui,sans-serif;color:var(--ui-text);`;
     const label = children.trim() || "";
-    const labelHtml = label ? `<span style="font-size:14px;">${label}</span>` : "";
-    return `${pad}<label ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUISwitch" style="${esc(wrapStyle)}">\n${pad}  <span style="${esc(trackStyle)}"><span style="${esc(thumbStyle)}"></span></span>\n${pad}  ${labelHtml}\n${pad}</label>\n`;
+    const labelHtml = label ? `<span style="font-size:14px;font-weight:500;">${label}</span>` : "";
+    return `${pad}<label ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Switch" style="${esc(wrapStyle)}">\n${pad}  <span style="${esc(trackStyle)}"><span style="${esc(thumbStyle)}"></span></span>\n${pad}  ${labelHtml}\n${pad}</label>\n`;
   },
 
-  "heroui:HeroUIChip": (iId, ip, children, pad) => {
-    const color = String(ip.color ?? "default");
-    const variant = String(ip.variant ?? "solid");
-    const size = String(ip.size ?? "md");
-    const bg = variant === "solid" ? (HEROUI_COLORS[color] ?? "#3f3f46") : (HEROUI_BG_COLORS[color] ?? "rgba(63,63,70,0.2)");
-    const textColor = variant === "solid" ? "#fff" : (HEROUI_COLORS[color] ?? "#fafafa");
-    const sizeMap: Record<string, string> = { sm: "10px", md: "12px", lg: "14px" };
-    const padMap: Record<string, string> = { sm: "2px 6px", md: "4px 10px", lg: "6px 14px" };
-    const style = `display:inline-flex;align-items:center;font-size:${sizeMap[size] ?? "12px"};padding:${padMap[size] ?? "4px 10px"};border-radius:9999px;background:${bg};color:${textColor};font-family:system-ui,sans-serif;white-space:nowrap;font-weight:500;`;
-    const content = children.trim() || "Chip";
-    return `${pad}<span ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIChip" style="${esc(style)}">${content}</span>\n`;
+  "shadcn:Select": (iId, ip, _children, pad) => {
+    const placeholder = String(ip.placeholder ?? "Select option");
+    const val = String(ip.defaultValue ?? "Active");
+    const style = `display:inline-flex;align-items:center;justify-content:between;width:100%;max-width:200px;padding:8px 12px;border-radius:6px;border:1px solid var(--ui-border);background:var(--ui-bg);color:var(--ui-text);font-size:14px;font-family:system-ui,sans-serif;box-sizing:border-box;`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Select" style="${esc(style)}">\n${pad}  <span style="flex-grow:1;text-align:left;">${esc(val || placeholder)}</span>\n${pad}  <span style="font-size:10px;color:var(--ui-text-muted);">▼</span>\n${pad}</div>\n`;
   },
 
-  "heroui:HeroUIProgress": (iId, ip, _children, pad) => {
-    const color = String(ip.color ?? "primary");
-    const value = Math.max(0, Math.min(100, Number(ip.value) || 50));
-    const label = ip.label ? String(ip.label) : "";
-    const showValue = ip.showValueLabel === true;
-    const barColor = HEROUI_COLORS[color] ?? "#006FEE";
-    const trackStyle = `width:100%;height:6px;background:#27272a;border-radius:9999px;overflow:hidden;`;
-    const barStyle = `height:100%;width:${value}%;background:${barColor};border-radius:9999px;transition:width .3s;`;
-    const labelHtml = label ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px;color:#a1a1aa;font-family:system-ui,sans-serif;"><span>${esc(label)}</span>${showValue ? `<span>${value}%</span>` : ""}</div>` : "";
-    const wrapStyle = `display:flex;flex-direction:column;width:100%;`;
-    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIProgress" style="${esc(wrapStyle)}">\n${pad}  ${labelHtml}\n${pad}  <div style="${esc(trackStyle)}"><div style="${esc(barStyle)}"></div></div>\n${pad}</div>\n`;
+  "shadcn:Badge": (iId, ip, children, pad) => {
+    const variant = String(ip.variant ?? "default");
+    const bg = variant === "destructive" ? "var(--ui-danger)" : variant === "secondary" ? "var(--ui-surface)" : "var(--ui-accent)";
+    const textColor = variant === "secondary" ? "var(--ui-text)" : "#fff";
+    const border = variant === "outline" ? "1px solid var(--ui-border)" : "none";
+    const bgStyle = variant === "outline" ? "transparent" : bg;
+    const style = `display:inline-flex;align-items:center;font-size:11px;padding:2px 10px;border-radius:9999px;background:${bgStyle};color:${textColor};border:${border};font-family:system-ui,sans-serif;white-space:nowrap;font-weight:600;`;
+    const content = children.trim() || "Badge";
+    return `${pad}<span ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Badge" style="${esc(style)}">${content}</span>\n`;
   },
 
-  "heroui:HeroUISpinner": (iId, ip, _children, pad) => {
-    const color = String(ip.color ?? "primary");
-    const size = String(ip.size ?? "md");
-    const sizeMap: Record<string, string> = { sm: "24px", md: "36px", lg: "48px" };
-    const spinColor = HEROUI_COLORS[color] ?? "#006FEE";
-    const sz = sizeMap[size] ?? "36px";
-    const label = ip.label ? String(ip.label) : "";
-    const style = `width:${sz};height:${sz};border:3px solid rgba(255,255,255,0.1);border-top-color:${spinColor};border-radius:50%;animation:nova-spin .8s linear infinite;`;
-    const labelHtml = label ? `<span style="font-size:13px;color:#a1a1aa;font-family:system-ui,sans-serif;">${esc(label)}</span>` : "";
-    const wrapStyle = `display:inline-flex;flex-direction:column;align-items:center;gap:8px;`;
-    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUISpinner" style="${esc(wrapStyle)}">\n${pad}  <div style="${esc(style)}"></div>\n${pad}  ${labelHtml}\n${pad}</div>\n`;
-  },
-
-  "heroui:HeroUIUser": (iId, ip, _children, pad) => {
-    const name = String(ip.name ?? "User Name");
-    const description = String(ip.description ?? "");
-    const avatarSrc = ip.avatarSrc ? String(ip.avatarSrc) : "";
+  "shadcn:Avatar": (iId, ip, _children, pad) => {
+    const name = String(ip.name ?? "John Doe");
+    const src = ip.src ? String(ip.src) : "";
     const initials = name.split(" ").map((n: string) => n[0] ?? "").join("").slice(0, 2).toUpperCase();
-    const avatarStyle = `width:36px;height:36px;border-radius:50%;background:#3f3f46;color:#fafafa;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden;`;
-    const avatarHtml = avatarSrc
-      ? `<img src="${esc(avatarSrc)}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;">`
+    const style = `width:36px;height:36px;border-radius:50%;background:var(--ui-surface);color:var(--ui-text);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden;border:1px solid var(--ui-border);font-family:system-ui,sans-serif;`;
+    const innerHtml = src
+      ? `<img src="${esc(src)}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;">`
       : initials;
-    const descHtml = description ? `<p style="font-size:12px;color:#a1a1aa;margin:0;">${esc(description)}</p>` : "";
-    const wrapStyle = `display:inline-flex;align-items:center;gap:10px;font-family:system-ui,sans-serif;color:#fafafa;`;
-    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIUser" style="${esc(wrapStyle)}">\n${pad}  <div style="${esc(avatarStyle)}">${avatarHtml}</div>\n${pad}  <div><p style="font-size:14px;font-weight:500;margin:0;">${esc(name)}</p>${descHtml}</div>\n${pad}</div>\n`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Avatar" style="${esc(style)}">${innerHtml}</div>\n`;
   },
 
-  "heroui:HeroUICode": (iId, ip, children, pad) => {
-    const color = String(ip.color ?? "default");
-    const textColor = color === "default" ? "#d4d4d8" : (HEROUI_COLORS[color] ?? "#d4d4d8");
-    const style = `font-family:ui-monospace,'Fira Code',monospace;font-size:14px;padding:2px 8px;border-radius:6px;background:rgba(63,63,70,0.25);color:${textColor};`;
+  "shadcn:Progress": (iId, ip, _children, pad) => {
+    const value = Math.max(0, Math.min(100, Number(ip.value) || 60));
+    const trackStyle = `width:100%;height:8px;background:var(--ui-surface);border-radius:9999px;overflow:hidden;`;
+    const barStyle = `height:100%;width:${value}%;background:var(--ui-accent);border-radius:9999px;`;
+    return `${pad}<div ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Progress" style="display:flex;flex-direction:column;width:100%;">\n${pad}  <div style="${esc(trackStyle)}"><div style="${esc(barStyle)}"></div></div>\n${pad}</div>\n`;
+  },
+
+  "shadcn:Separator": (iId, ip, _children, pad) => {
+    const orientation = String(ip.orientation ?? "horizontal");
+    const style = orientation === "horizontal"
+      ? "width:100%;height:1px;background:var(--ui-border);margin:8px 0;display:block;border:none;"
+      : "height:100%;width:1px;background:var(--ui-border);margin:0 8px;display:inline-block;border:none;";
+    return `${pad}<hr ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Separator" style="${esc(style)}">\n`;
+  },
+
+  "shadcn:Code": (iId, _ip, children, pad) => {
+    const style = `font-family:ui-monospace,'Fira Code',monospace;font-size:13px;padding:2px 6px;border-radius:4px;background:var(--ui-surface);color:var(--ui-text);border:1px solid var(--ui-border);`;
     const content = children.trim() || "code";
-    return `${pad}<code ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUICode" style="${esc(style)}">${content}</code>\n`;
+    return `${pad}<code ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Code" style="${esc(style)}">${content}</code>\n`;
   },
 
-  "heroui:HeroUIDivider": (iId, _ip, _children, pad) => {
-    const style = `border:none;background:#27272a;height:1px;width:100%;margin:8px 0;display:block;`;
-    return `${pad}<hr ${idAttribute}="${iId}" ${componentAttribute}="heroui:HeroUIDivider" style="${esc(style)}">\n`;
+  "shadcn:Kbd": (iId, _ip, children, pad) => {
+    const style = `font-family:system-ui,sans-serif;font-size:11px;padding:2px 6px;border-radius:4px;background:var(--ui-surface);color:var(--ui-text);border:1px solid var(--ui-border);box-shadow:0 1px 1px rgba(0,0,0,0.1);font-weight:600;`;
+    const content = children.trim() || "Ctrl + P";
+    return `${pad}<kbd ${idAttribute}="${iId}" ${componentAttribute}="shadcn:Kbd" style="${esc(style)}">${content}</kbd>\n`;
   },
 };
 
-// Layout container inline styles (no special inner HTML — just pass children through)
-const HEROUI_CONTAINER_STYLES: Record<string, (p: Record<string, unknown>) => string> = {
-  "heroui:HeroUICard": () => "background:#18181b;border:1px solid #27272a;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.3);padding:16px;color:#fafafa;font-family:system-ui,sans-serif;",
-  "heroui:HeroUIRow": (p) => `display:grid;grid-template-columns:repeat(12,1fr);gap:${p.gap ?? "16px"};width:100%;box-sizing:border-box;`,
-  "heroui:HeroUICol": (p) => { const s = Math.max(1, Math.min(12, Number(p.span) || 6)); return `grid-column:span ${s}/span ${s};min-width:0;`; },
-  "heroui:HeroUIContainer": (p) => {
+const SHADCN_CONTAINER_STYLES: Record<string, (p: Record<string, unknown>) => string> = {
+  "shadcn:Card": () => "background:var(--ui-card);border:1px solid var(--ui-border);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:16px;color:var(--ui-text);font-family:system-ui,sans-serif;",
+  "shadcn:Row": (p) => `display:grid;grid-template-columns:repeat(12,1fr);gap:${p.gap ?? "16px"};width:100%;box-sizing:border-box;`,
+  "shadcn:Col": (p) => { const s = Math.max(1, Math.min(12, Number(p.span) || 6)); return `grid-column:span ${s}/span ${s};min-width:0;`; },
+  "shadcn:Container": (p) => {
     const jMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around", evenly: "space-evenly" };
     const aMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch", baseline: "baseline" };
     return `display:flex;flex-direction:${p.direction ?? "column"};justify-content:${jMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${aMap[String(p.align ?? "stretch")] ?? "stretch"};gap:${p.gap ?? "0px"};padding:${p.padding ?? "16px"};flex-wrap:${p.wrap ?? "nowrap"};box-sizing:border-box;min-height:40px;width:100%;`;
   },
-  "heroui:HeroUISection": (p) => `display:flex;flex-direction:column;width:100%;max-width:${p.maxWidth ?? "1200px"};margin:0 auto;padding:${p.padding ?? "48px 24px"};background:${p.background ?? "transparent"};box-sizing:border-box;min-height:80px;`,
-  "heroui:HeroUIFlexRow": (p) => {
+  "shadcn:Section": (p) => `display:flex;flex-direction:column;width:100%;max-width:${p.maxWidth ?? "1200px"};margin:0 auto;padding:${p.padding ?? "48px 24px"};background:${p.background ?? "transparent"};box-sizing:border-box;min-height:80px;`,
+  "shadcn:FlexRow": (p) => {
     const jMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", between: "space-between", around: "space-around" };
     const aMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
     return `display:flex;flex-direction:row;gap:${p.gap ?? "12px"};justify-content:${jMap[String(p.justify ?? "start")] ?? "flex-start"};align-items:${aMap[String(p.align ?? "center")] ?? "center"};flex-wrap:${p.wrap ?? "wrap"};width:100%;box-sizing:border-box;min-height:32px;`;
   },
-  "heroui:HeroUISpacer": (p) => `height:${p.height ?? "24px"};width:100%;flex-shrink:0;`,
-  "heroui:HeroUIImage": (p) => `width:${p.width ?? "100%"};height:${p.height ?? "auto"};object-fit:${p.objectFit ?? "cover"};border-radius:${p.borderRadius ?? "8px"};display:block;max-width:100%;`,
-  "heroui:HeroUIText": (p) => `font-size:${p.fontSize ?? "16px"};font-weight:${p.fontWeight ?? "400"};color:${p.color ?? "inherit"};text-align:${p.textAlign ?? "left"};line-height:1.6;margin:0;`,
-  "heroui:HeroUIHeading": (p) => {
-    const sizes: Record<number, string> = { 1: "2.5rem", 2: "2rem", 3: "1.5rem", 4: "1.25rem", 5: "1rem", 6: "0.875rem" };
-    return `font-size:${sizes[Number(p.level ?? 2)] ?? "2rem"};font-weight:bold;text-align:${p.textAlign ?? "left"};color:${p.color ?? "inherit"};margin:0;line-height:1.3;`;
+  "shadcn:Spacer": (p) => `height:${p.height ?? "24px"};width:100%;flex-shrink:0;`,
+  "shadcn:Text": (p) => `font-size:${p.fontSize ?? "16px"};font-weight:${p.fontWeight ?? "400"};color:${p.color ?? "inherit"};text-align:${p.textAlign ?? "left"};line-height:1.6;margin:0;font-family:system-ui,sans-serif;`,
+  "shadcn:Heading": (p) => {
+    const sizes: Record<number, string> = { 1: "2.25rem", 2: "1.75rem", 3: "1.5rem", 4: "1.25rem", 5: "1rem", 6: "0.875rem" };
+    return `font-size:${sizes[Number(p.level ?? 2)] ?? "1.75rem"};font-weight:700;text-align:${p.textAlign ?? "left"};color:${p.color ?? "inherit"};margin:0;line-height:1.25;font-family:system-ui,sans-serif;letter-spacing:-0.025em;`;
   },
-  "heroui:HeroUILink": (p) => `color:${p.color ?? "#006FEE"};text-decoration:underline;cursor:pointer;`,
+  "shadcn:Link": (p) => `color:${p.color ?? "var(--ui-accent)"};text-decoration:underline;cursor:pointer;font-family:system-ui,sans-serif;`,
 };
 
-// Tag map for layout/passthrough HeroUI components
-const HEROUI_CONTAINER_TAG: Record<string, string> = {
-  "heroui:HeroUICard": "div",
-  "heroui:HeroUIRow": "div", "heroui:HeroUICol": "div",
-  "heroui:HeroUIContainer": "div", "heroui:HeroUISection": "section",
-  "heroui:HeroUIFlexRow": "div", "heroui:HeroUISpacer": "div",
-  "heroui:HeroUIImage": "img",
-  "heroui:HeroUIText": "p", "heroui:HeroUIHeading": "h2",
-  "heroui:HeroUILink": "a",
+const SHADCN_CONTAINER_TAG: Record<string, string> = {
+  "shadcn:Card": "div",
+  "shadcn:Row": "div", "shadcn:Col": "div",
+  "shadcn:Container": "div", "shadcn:Section": "section",
+  "shadcn:FlexRow": "div", "shadcn:Spacer": "div",
+  "shadcn:Text": "p", "shadcn:Heading": "h2",
+  "shadcn:Link": "a",
 };
 
 const VOID_TAGS = new Set(["img", "input", "hr", "br"]);
@@ -264,9 +245,9 @@ function renderInstance(
   const ip = propMap.get(iId) ?? {};
   const pad = "  ".repeat(indent);
 
-  // ── HeroUI: self-contained renderers (Button, Switch, Input, etc.) ────────
-  const heroRenderer = HEROUI_RENDERERS[inst.component];
-  if (heroRenderer) {
+  // ── shadcn: self-contained renderers (Button, Switch, Input, etc.) ────────
+  const shadcnRenderer = SHADCN_RENDERERS[inst.component];
+  if (shadcnRenderer) {
     // Collect children HTML first (for components that may embed children, e.g. button label)
     const childrenHtml = inst.children
       .map((c) => {
@@ -275,18 +256,18 @@ function renderInstance(
         return "";
       })
       .join("");
-    return heroRenderer(iId, ip, childrenHtml, pad);
+    return shadcnRenderer(iId, ip, childrenHtml, pad);
   }
 
-  // ── HeroUI: layout/passthrough containers ─────────────────────────────────
-  const heroContainerStyle = HEROUI_CONTAINER_STYLES[inst.component];
-  if (heroContainerStyle) {
-    let tag = HEROUI_CONTAINER_TAG[inst.component] ?? "div";
+  // ── shadcn: layout/passthrough containers ─────────────────────────────────
+  const shadcnContainerStyle = SHADCN_CONTAINER_STYLES[inst.component];
+  if (shadcnContainerStyle) {
+    let tag = SHADCN_CONTAINER_TAG[inst.component] ?? "div";
     // Dynamic heading tag
-    if (inst.component === "heroui:HeroUIHeading") {
+    if (inst.component === "shadcn:Heading") {
       tag = `h${ip.level ?? 2}`;
     }
-    const styleStr = heroContainerStyle(ip);
+    const styleStr = shadcnContainerStyle(ip);
     const attrs: string[] = [
       `${idAttribute}="${iId}"`,
       `${componentAttribute}="${esc(inst.component)}"`,
@@ -310,11 +291,11 @@ function renderInstance(
         return "";
       })
       .join("");
-    // Fallback content for empty containers (e.g. HeroUIText, HeroUIHeading)
+    // Fallback content for empty containers (e.g. Text, Heading)
     const fallbacks: Record<string, string> = {
-      "heroui:HeroUIText": "Text block",
-      "heroui:HeroUIHeading": `Heading ${ip.level ?? 2}`,
-      "heroui:HeroUILink": "Link text",
+      "shadcn:Text": "Text block",
+      "shadcn:Heading": `Heading ${ip.level ?? 2}`,
+      "shadcn:Link": "Link text",
     };
     const inner = children || (fallbacks[inst.component] ? `${pad}  ${fallbacks[inst.component]}\n` : "");
     return `${pad}<${tag} ${attrs.join(" ")}>\n${inner}${pad}</${tag}>\n`;

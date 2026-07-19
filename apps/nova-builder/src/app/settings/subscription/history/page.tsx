@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UI_VARS as C, FONT } from "@/lib/uiTheme";
-import { Breadcrumbs, BreadcrumbItem } from "@heroui/react";
+
 
 interface Transaction {
   order_code: string;
@@ -71,15 +71,13 @@ export default function SubscriptionHistoryPage() {
   return (
     <div style={{ background: C.bg, minHeight: "100vh", padding: "28px 32px", fontFamily: C.font, color: C.text }}>
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
-        
-        {/* Header navigation using HeroUI Breadcrumbs */}
-        <div style={{ marginBottom: 24 }}>
-          <Breadcrumbs size="md">
-            <BreadcrumbItem onClick={() => router.push("/settings/subscription")} style={{ cursor: "pointer" }}>
-              Subscription
-            </BreadcrumbItem>
-            <BreadcrumbItem>Lịch sử giao dịch</BreadcrumbItem>
-          </Breadcrumbs>
+        {/* Header navigation using Breadcrumbs */}
+        <div style={{ marginBottom: 24, display: "flex", gap: 8, alignItems: "center", fontSize: "14px" }}>
+          <span onClick={() => router.push("/settings/subscription")} style={{ cursor: "pointer", color: C.accent, opacity: 0.85 }}>
+            Subscription
+          </span>
+          <span style={{ color: C.textMuted }}>/</span>
+          <span style={{ color: C.text }}>Lịch sử giao dịch</span>
         </div>
 
         {loading ? (

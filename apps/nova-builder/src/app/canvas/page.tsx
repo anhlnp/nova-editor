@@ -7,7 +7,6 @@
 // The canvas has no HTTP session; its data comes from the sync emitter only.
 
 import dynamic from "next/dynamic";
-import { HeroUIProvider } from "@heroui/react";
 import "../globals.css";
 
 // Force client-side rendering: Canvas uses window APIs and the sync emitter.
@@ -124,7 +123,7 @@ export default function CanvasPage() {
   }, []);
 
   return (
-    <HeroUIProvider>
+    <>
       <style dangerouslySetInnerHTML={{ __html: canvasStyles }} />
       {isPreview ? (
         <div className="min-h-screen relative">
@@ -136,6 +135,6 @@ export default function CanvasPage() {
           <DiagnosticsOverlay />
         </div>
       )}
-    </HeroUIProvider>
+    </>
   );
 }
