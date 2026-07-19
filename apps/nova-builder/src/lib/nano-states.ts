@@ -30,6 +30,7 @@ export const $isContentMode = computed($builderMode, (m) => m === "content");
 
 export const $isDirty = atom<boolean>(false);
 export const $saveTriggerCount = atom<number>(0);
+export const $lastChangeWasReparent = atom<boolean>(false);
 
 // ─── M10 UI state atoms ───────────────────────────────────────────────────────
 

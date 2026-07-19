@@ -5,6 +5,23 @@
 import type { Instances } from "@webstudio-is/sdk";
 import { checkNesting } from "./nestingGuard";
 
+let getArea: any;
+let getChildrenRects: any;
+let getLocalChildrenOrientation: any;
+let getIndexAdjustment: any;
+
+if (typeof window !== "undefined") {
+  try {
+    const ds = require("@webstudio-is/design-system");
+    getArea = ds.getArea;
+    getChildrenRects = ds.getChildrenRects;
+    getLocalChildrenOrientation = ds.getLocalChildrenOrientation;
+    getIndexAdjustment = ds.getIndexAdjustment;
+  } catch (err) {
+    console.error("Failed to load design-system primitives dynamically:", err);
+  }
+}
+
 export type DropPosition = "above" | "below" | "into";
 
 const TEXT_ONLY_COMPONENTS = new Set([
@@ -22,6 +39,68 @@ const TEXT_ONLY_COMPONENTS = new Set([
 export function canAcceptChildren(component: string): boolean {
   return !TEXT_ONLY_COMPONENTS.has(component);
 }
+
+export function isGridRow(component: string | null | undefined): boolean {
+  return component === "HeroUIRow";
+}
+
+export function resolveDropPosition(
+  el: HTMLElement,
+  pointer: { x: number; y: number },
+  component: string
+): DropPosition {
+  const comp = el.getAttribute("data-ws-component");
+  if (comp === "Body") return "into";
+
+  if (component && canAcceptChildren(component)) {
+    const rect = el.getBoundingClientRect();
+    const threshold = Math.min(rect.width, rect.height) * 0.25;
+    const area = getArea(pointer, threshold, rect);
+    if (area === "center") {
+      return "into";
+    }
+  }
+
+  const parent = el.parentElement;
+  if (!parent) return "above";
+
+  const children = Array.from(parent.children);
+  const childIndex = children.indexOf(el);
+  if (childIndex === -1) return "above";
+
+  const parentComponent = parent.getAttribute("data-ws-component");
+  if (isGridRow(parentComponent)) {
+    const rect = el.getBoundingClientRect();
+    const isFirst = childIndex === 0;
+    const isLast = childIndex === children.length - 1;
+    const centerX = rect.left + rect.width / 2;
+
+    if (isFirst && pointer.x < rect.left + 20) return "above";
+    if (isLast && pointer.x > rect.right - 20) return "below";
+
+    return pointer.x < centerX ? "above" : "below";
+  }
+
+  const parentRect = parent.getBoundingClientRect();
+  const relPointer = {
+    x: pointer.x - parentRect.left,
+    y: pointer.y - parentRect.top,
+  };
+
+  const childrenRects = getChildrenRects(parent, children);
+  const closestChildRect = childrenRects[childIndex];
+
+  const orientation = getLocalChildrenOrientation(
+    parent,
+    (p) => Array.from(p.children),
+    childrenRects,
+    childIndex
+  );
+
+  const adj = getIndexAdjustment(relPointer, closestChildRect, orientation);
+  return adj === 0 ? "above" : "below";
+}
+
 
 export function buildParentMap(instances: Instances): Map<string, string> {
   const parent = new Map<string, string>();

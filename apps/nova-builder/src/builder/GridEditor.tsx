@@ -1,6 +1,8 @@
-﻿"use client";
 import { writeStyleProperty } from "@/lib/styleWriteHelper";
 import { UI_VARS as C } from "@/lib/uiTheme";
+import { writeGridSpan, writeGridColumnStart, type AnyProp } from "@/lib/propWriteHelper";
+import { useStore } from "@nanostores/react";
+import { $props } from "@/lib/data-stores";
 
 // ── Track list parsing ─────────────────────────────────────────────────────────
 
@@ -199,14 +201,22 @@ export function GridContainerPanel({
 
 export function GridChildPanel({
   instanceId,
-  columnCss,
   rowCss,
 }: {
   instanceId: string;
-  columnCss: string;
   rowCss: string;
 }) {
-  const col = parseGridLine(columnCss);
+  const props = useStore($props) as Map<string, AnyProp>;
+  
+  let colStart: number | null = null;
+  let span = 6; // default span
+  for (const p of props.values()) {
+    if (p.instanceId === instanceId) {
+      if (p.name === "colStart" && typeof p.value === "number") colStart = p.value;
+      if (p.name === "span" && typeof p.value === "number") span = p.value;
+    }
+  }
+
   const row = parseGridLine(rowCss);
 
   return (
@@ -226,19 +236,13 @@ export function GridChildPanel({
           </div>
           <div style={{ display: "flex", gap: 4 }}>
             <input
-              type="number" min={1} value={col.start}
-              onChange={(e) =>
-                writeStyleProperty(instanceId, "gridColumn",
-                  serializeGridLine(parseInt(e.target.value) || 1, col.span))
-              }
+              type="number" min={1} value={colStart ?? ""} placeholder="auto"
+              onChange={(e) => writeGridColumnStart(instanceId, parseInt(e.target.value) || null)}
               style={numInputStyle} title="Column start line"
             />
             <input
-              type="number" min={1} value={col.span}
-              onChange={(e) =>
-                writeStyleProperty(instanceId, "gridColumn",
-                  serializeGridLine(col.start, parseInt(e.target.value) || 1))
-              }
+              type="number" min={1} value={span}
+              onChange={(e) => writeGridSpan(instanceId, parseInt(e.target.value) || 1)}
               style={numInputStyle} title="Column span"
             />
           </div>

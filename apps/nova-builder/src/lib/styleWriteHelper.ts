@@ -6,6 +6,14 @@
  * editors depend on this abstraction, not on concrete atom-mutation details.
  */
 
+// ── Grid position type (shared with canvas and sidebar) ────────────────────
+export type GridPosition = {
+  colStart: number; // 1-based column start (1–12)
+  span: number;     // column span (1–12)
+  rowStart?: number;  // optional 1-based row start
+  rowSpan?: number;   // optional row span
+};
+
 import { updateData } from "@/lib/transactions";
 import {
   $selectedBreakpoint,
@@ -78,4 +86,40 @@ export function writeStyleProperty(
       });
     }
   });
+}
+
+/**
+ * Write `grid-column: colStart / span span` for an instance.
+ * Shorthand that delegates to `writeStyleProperty` so it flows through
+ * the same undoable transaction and breakpoint logic.
+ *
+ * @param instanceId — the instance to update
+ * @param colStart   — 1-based grid column start (1–12)
+ * @param span       — number of columns to span (1–12)
+ */
+export function writeGridColumnStyle(
+  instanceId: string,
+  colStart: number,
+  span: number
+): void {
+  const clampedStart = Math.max(1, Math.min(12, colStart));
+  const clampedSpan = Math.max(1, Math.min(13 - clampedStart, span));
+  writeStyleProperty(instanceId, "gridColumn", `${clampedStart} / span ${clampedSpan}`);
+}
+
+/**
+ * Write `grid-row: rowStart / span rowSpan` for an instance.
+ *
+ * @param instanceId — the instance to update
+ * @param rowStart   — 1-based grid row start
+ * @param rowSpan    — number of rows to span
+ */
+export function writeGridRowStyle(
+  instanceId: string,
+  rowStart: number,
+  rowSpan: number
+): void {
+  const clampedStart = Math.max(1, rowStart);
+  const clampedSpan = Math.max(1, rowSpan);
+  writeStyleProperty(instanceId, "gridRow", `${clampedStart} / span ${clampedSpan}`);
 }

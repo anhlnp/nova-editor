@@ -74,6 +74,9 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../../packages/ws-css-engine
+      '@webstudio-is/design-system':
+        specifier: workspace:*
+        version: link:../../packages/ws-design-system
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../../packages/ws-fonts

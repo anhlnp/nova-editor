@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { $instances, $pages } from "@/lib/data-stores";
 import { $selectedInstanceSelector } from "@/lib/nano-states";
-import { canAcceptChildren } from "@/lib/treeMove";
+import { resolveDropPosition } from "@/lib/treeMove";
 
 type GhostPos = { x: number; y: number };
 
@@ -77,19 +77,6 @@ function findTargetInIframe(ix: number, iy: number): { el: HTMLElement; instance
   return { el: instEl, instanceId: id };
 }
 
-// Determine drop position from vertical ratio within the target element.
-function computePosition(el: HTMLElement, iy: number): "above" | "below" | "into" {
-  const comp = el.getAttribute("data-ws-component");
-  if (comp === "Body") return "into"; // Always drop into the root Body container
-
-  const r = el.getBoundingClientRect();
-  const ratio = (iy - r.top) / Math.max(1, r.height);
-  const instances = $instances.get();
-  const inst = instances.get(el.getAttribute(selectorIdAttribute)?.split(",")[0] ?? "");
-  if (inst && canAcceptChildren(inst.component) && ratio > 0.25 && ratio < 0.75) return "into";
-  return ratio <= 0.5 ? "above" : "below";
-}
-
 // ── Primary hook ────────────────────────────────────────────────────────────
 
 export function useDraggable(
@@ -100,12 +87,41 @@ export function useDraggable(
   const componentRef = useRef<string>("");
   const dropTargetRef = useRef<DropTarget>(null);
 
+  const lastPointerIdRef = useRef<number | null>(null);
+  const lastPointerTargetRef = useRef<HTMLElement | null>(null);
+  const capturedElementRef = useRef<HTMLElement | null>(null);
+  const capturedPointerIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      lastPointerIdRef.current = e.pointerId;
+      lastPointerTargetRef.current = e.target as HTMLElement;
+    }
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+    };
+  }, []);
+
   const startDrag = useCallback(
     (componentName: string, startX: number, startY: number) => {
       componentRef.current = componentName;
       dropTargetRef.current = null;
       setIsDragging(true);
       setGhostPos({ x: startX, y: startY });
+
+      const pointerId = lastPointerIdRef.current ?? 1;
+      const element = lastPointerTargetRef.current || (document.elementFromPoint(startX, startY) as HTMLElement | null);
+
+      if (element && typeof element.setPointerCapture === "function") {
+        try {
+          element.setPointerCapture(pointerId);
+          capturedElementRef.current = element;
+          capturedPointerIdRef.current = pointerId;
+        } catch (e) {
+          console.warn("[useDraggable] setPointerCapture failed:", e);
+        }
+      }
     },
     []
   );
@@ -137,7 +153,7 @@ export function useDraggable(
       iframe.contentWindow?.postMessage({ type: "nova:gridGuides", visible: true }, window.location.origin);
     }
 
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       setGhostPos({ x: e.clientX, y: e.clientY });
 
       if (!isOverIframe(e.clientX, e.clientY)) {
@@ -159,7 +175,10 @@ export function useDraggable(
         return;
       }
 
-      const position = computePosition(hit.el, iCoords.iy);
+      const instances = $instances.get();
+      const inst = instances.get(hit.instanceId);
+      const component = inst?.component ?? "";
+      const position = resolveDropPosition(hit.el, { x: iCoords.ix, y: iCoords.iy }, component);
       dropTargetRef.current = { instanceId: hit.instanceId, position };
 
       // Tell canvas to draw drop indicator
@@ -170,8 +189,18 @@ export function useDraggable(
       );
     }
 
-    function onMouseUp(e: MouseEvent) {
+    function onPointerUp(e: PointerEvent) {
       setIsDragging(false);
+
+      if (capturedElementRef.current && capturedPointerIdRef.current !== null) {
+        try {
+          capturedElementRef.current.releasePointerCapture(capturedPointerIdRef.current);
+        } catch (err) {
+          console.warn("[useDraggable] releasePointerCapture failed:", err);
+        }
+      }
+      capturedElementRef.current = null;
+      capturedPointerIdRef.current = null;
 
       if (cover) {
         cover.remove();
@@ -189,11 +218,19 @@ export function useDraggable(
       dropTargetRef.current = null;
     }
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
     return () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      if (capturedElementRef.current && capturedPointerIdRef.current !== null) {
+        try {
+          capturedElementRef.current.releasePointerCapture(capturedPointerIdRef.current);
+        } catch (err) {}
+      }
+      capturedElementRef.current = null;
+      capturedPointerIdRef.current = null;
+
       if (cover) {
         cover.remove();
       }
