@@ -41,21 +41,26 @@ export async function POST(req: Request) {
   }
 
   let name = "Untitled Project";
+  let schemaJson: Record<string, any> | undefined = undefined;
   try {
-    const body = await req.json() as { name?: string };
+    const body = await req.json() as { name?: string; schema_json?: Record<string, any> };
     if (body.name?.trim()) name = body.name.trim();
+    if (body.schema_json) schemaJson = body.schema_json;
   } catch {
     // empty body is fine — default name is used
   }
 
   const now = new Date().toISOString();
-  const schema = emptyProjectSchema(name, now);
+  const schema = schemaJson || emptyProjectSchema(name, now);
 
   try {
     const { id } = await createProject(userId, name, schema);
     return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[api/projects] create failed:", err);
-    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to create project" },
+      { status: 500 }
+    );
   }
 }

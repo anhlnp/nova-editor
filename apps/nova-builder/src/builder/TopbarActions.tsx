@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@nanostores/react";
 import {
@@ -29,7 +29,11 @@ import {
   $cssVars,
   $interactions,
   $customCss,
+  $isDirty,
+  $saveTriggerCount,
 } from "@/lib/nano-states";
+import { saveProject } from "@/lib/saveProject";
+import { SaveProjectDialog } from "./SaveProjectDialog";
 import { DeployPanel } from "./DeployPanel";
 import { CollaboratorAvatars } from "./PresenceLayer";
 import { LangToggle } from "./LangToggle";
@@ -38,6 +42,7 @@ import { UI_VARS as C } from "@/lib/uiTheme";
 import { useI18n } from "@/lib/i18n";
 import { $saveStatus } from "@/lib/saveQueue";
 import type { I18nBuilderDictionary } from "@/lib/i18n/types";
+import { $symbols } from "@/lib/symbols";
 
 // Sync-status chip (M2): reflects the patch-autosave queue. Conflict offers a
 // reload — the only safe recovery when another tab/session saved first.
@@ -70,12 +75,10 @@ function SyncStatusChip() {
 }
 
 type Props = {
-  onSave: () => void;
-  isSaving: boolean;
   isDemo?: boolean;
 };
 
-export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
+export function TopbarActions({ isDemo }: Props) {
   const { t } = useI18n();
   const router = useRouter();
   const meta = useStore($projectMeta);
@@ -88,11 +91,162 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
   const canvasZoom = useStore($canvasZoom);
   const gridGuides = useStore($gridGuidesVisible);
   const cssPreview = useStore($cssPreviewOpen);
+  
+  const isDirty = useStore($isDirty);
+  const saveTriggerCount = useStore($saveTriggerCount);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<number | null>(null);
+  const [timeLabel, setTimeLabel] = useState<string>("");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const [published, setPublished] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [deployOpen, setDeployOpen] = useState(false);
+
+  const handleSaveClick = useCallback(() => {
+    if (isSaving) return;
+    setSaveDialogOpen(true);
+  }, [isSaving]);
+
+  // Sync keyboard Ctrl+S / trigger count to show dialog
+  useEffect(() => {
+    if (saveTriggerCount > 0) {
+      handleSaveClick();
+    }
+  }, [saveTriggerCount, handleSaveClick]);
+
+  // Update time elapsed label since last save
+  useEffect(() => {
+    if (lastSavedTime === null || isSaving || isDirty) return;
+    
+    const updateLabel = () => {
+      const diff = Date.now() - lastSavedTime;
+      const seconds = Math.floor(diff / 1000);
+      if (seconds < 10) {
+        setTimeLabel("Saved");
+      } else if (seconds < 60) {
+        setTimeLabel(`Saved (${seconds}s ago)`);
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        setTimeLabel(`Saved (${minutes}m ago)`);
+      }
+    };
+    
+    updateLabel();
+    const interval = setInterval(updateLabel, 5000);
+    return () => clearInterval(interval);
+  }, [lastSavedTime, isSaving, isDirty]);
+
+  const handleUpdate = async () => {
+    if (!meta) return;
+    setIsSaving(true);
+    setSaveError(false);
+    try {
+      await saveProject(meta.id);
+      $isDirty.set(false);
+      setLastSavedTime(Date.now());
+    } catch (err) {
+      console.error(err);
+      setSaveError(true);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getProjectPayload = (name: string, description: string = "", thumbnail: string = "") => {
+    const data = {
+      pages: $pages.get()!,
+      assets: $assets.get(),
+      instances: $instances.get(),
+      props: $props.get(),
+      dataSources: $dataSources.get(),
+      resources: $resources.get(),
+      breakpoints: $breakpoints.get(),
+      styles: $styles.get(),
+      styleSources: $styleSources.get(),
+      styleSourceSelections: $styleSourceSelections.get(),
+    };
+    const serialized = serializeWebstudioData(data);
+    return {
+      name,
+      schema_json: {
+        schemaVersion: "5.0",
+        data: serialized,
+        cssVars: $cssVars.get(),
+        interactions: $interactions.get(),
+        customCss: $customCss.get(),
+        symbols: $symbols.get(),
+        metadata: {
+          description,
+          thumbnail,
+        }
+      }
+    };
+  };
+
+  const handleCreate = async (name: string, description: string, thumbnail: string) => {
+    setIsSaving(true);
+    setSaveError(false);
+    try {
+      const payload = getProjectPayload(name, description, thumbnail);
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      const { id } = (await res.json()) as { id: string };
+
+      $projectMeta.set({ id, name, updatedAt: new Date().toISOString() });
+      $isDirty.set(false);
+      setLastSavedTime(Date.now());
+
+      router.push(`/builder/${id}`);
+    } catch (err) {
+      console.error(err);
+      setSaveError(true);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveAs = async (newName: string) => {
+    setIsSaving(true);
+    setSaveError(false);
+    try {
+      const payload = getProjectPayload(newName);
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      const { id } = (await res.json()) as { id: string };
+
+      $projectMeta.set({ id, name: newName, updatedAt: new Date().toISOString() });
+      $isDirty.set(false);
+      setLastSavedTime(Date.now());
+
+      router.push(`/builder/${id}`);
+    } catch (err) {
+      console.error(err);
+      setSaveError(true);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handlePublish = useCallback(() => {
     if (!meta) return;
@@ -204,6 +358,38 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
             >
               Preview
             </button>
+            <button
+              onClick={handleSaveClick}
+              disabled={isSaving || (!isDirty && !saveError)}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 5,
+                border: "none",
+                background: isSaving
+                  ? "rgba(255,255,255,0.06)"
+                  : saveError
+                  ? "rgba(220,38,38,0.85)"
+                  : isDirty
+                  ? "rgba(5,150,105,0.85)"
+                  : "rgba(255,255,255,0.08)",
+                color: isSaving || (!isDirty && !saveError) ? C.textMuted : "#fff",
+                fontSize: 12,
+                fontFamily: C.font,
+                cursor: isSaving || (!isDirty && !saveError) ? "default" : "pointer",
+                fontWeight: 600,
+                transition: "all 0.15s",
+              }}
+            >
+              {isSaving
+                ? "Saving..."
+                : saveError
+                ? "Failed. Retry?"
+                : isDirty
+                ? "Save"
+                : lastSavedTime !== null
+                ? timeLabel
+                : "Save"}
+            </button>
           </>
         ) : (
           <>
@@ -274,11 +460,36 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
 
             {/* 5 — Save */}
             <button
-              onClick={onSave}
-              disabled={isSaving}
-              style={{ padding: "4px 12px", borderRadius: 5, border: "none", background: isSaving ? "rgba(255,255,255,0.06)" : "rgba(5,150,105,0.85)", color: "#fff", fontSize: 12, fontFamily: C.font, cursor: isSaving ? "default" : "pointer", fontWeight: 600 }}
+              onClick={handleSaveClick}
+              disabled={isSaving || (!isDirty && !saveError)}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 5,
+                border: "none",
+                background: isSaving
+                  ? "rgba(255,255,255,0.06)"
+                  : saveError
+                  ? "rgba(220,38,38,0.85)"
+                  : isDirty
+                  ? "rgba(5,150,105,0.85)"
+                  : "rgba(255,255,255,0.08)",
+                color: isSaving || (!isDirty && !saveError) ? C.textMuted : "#fff",
+                fontSize: 12,
+                fontFamily: C.font,
+                cursor: isSaving || (!isDirty && !saveError) ? "default" : "pointer",
+                fontWeight: 600,
+                transition: "all 0.15s",
+              }}
             >
-              {isSaving ? t.builder.saving : t.builder.save}
+              {isSaving
+                ? "Saving..."
+                : saveError
+                ? "Failed. Retry?"
+                : isDirty
+                ? "Save"
+                : lastSavedTime !== null
+                ? timeLabel
+                : "Saved"}
             </button>
 
             {/* 6 — ✦ Generate */}
@@ -292,6 +503,16 @@ export function TopbarActions({ onSave, isSaving, isDemo }: Props) {
           </>
         )}
       </div>
+
+      <SaveProjectDialog
+        isOpen={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        isDemo={!!isDemo}
+        projectName={meta?.name || ""}
+        onUpdate={handleUpdate}
+        onCreate={handleCreate}
+        onSaveAs={handleSaveAs}
+      />
     </>
   );
 }

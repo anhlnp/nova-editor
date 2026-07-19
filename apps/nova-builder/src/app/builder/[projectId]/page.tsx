@@ -19,11 +19,23 @@ import { useStore } from "@nanostores/react";
 import { useParams } from "next/navigation";
 import { nanoid } from "nanoid";
 import { useSession } from "next-auth/react";
-import { $instances } from "@/lib/data-stores";
+import {
+  $instances,
+  $pages,
+  $assets,
+  $props,
+  $dataSources,
+  $resources,
+  $breakpoints,
+  $styleSources,
+  $styleSourceSelections,
+} from "@/lib/data-stores";
 import {
   $selectedBreakpoint, $aiPanelOpen, $aiInitialPrompt, $canvasZoom, $gridGuidesVisible,
   $selectedInstanceSelector, $pendingCanvasMsg,
+  $cssVars, $interactions, $customCss, $isDirty, $saveTriggerCount,
 } from "@/lib/nano-states";
+import { $symbols } from "@/lib/symbols";
 import { updateData, replaceMap } from "@/lib/transactions";
 import { saveProject } from "@/lib/saveProject";
 import { parseRichHtml } from "@/lib/richText";
@@ -74,6 +86,40 @@ export default function BuilderPage() {
 
   // ── Load project + seed atoms + SyncClient (leader) ─────────────────────────
   const { loadState, errorMessage, syncEmitterRef } = useProjectLoad(projectId, isDemo);
+
+  // ── Track dirty state (isDirty) ─────────────────────────────────────────────
+  useEffect(() => {
+    if (loadState !== "ready") return;
+
+    // Reset dirty state on load
+    $isDirty.set(false);
+
+    const atoms = [
+      $instances,
+      $pages,
+      $assets,
+      $props,
+      $dataSources,
+      $resources,
+      $breakpoints,
+      $styleSources,
+      $styleSourceSelections,
+      $cssVars,
+      $interactions,
+      $customCss,
+      $symbols,
+    ];
+
+    const unsubscribes = atoms.map((a) =>
+      a.listen(() => {
+        $isDirty.set(true);
+      })
+    );
+
+    return () => {
+      unsubscribes.forEach((un) => un());
+    };
+  }, [loadState]);
 
   // ── Live multiplayer presence (P56) ─────────────────────────────────────────
   const { data: session } = useSession();
@@ -278,17 +324,10 @@ export default function BuilderPage() {
   }, [loadState]);
 
   // ── Save: button + Ctrl+S ────────────────────────────────────────────────────
-  const handleSave = useCallback(async () => {
-    if (isDemo || isSaving || loadState !== "ready") return;
-    setIsSaving(true);
-    try {
-      await saveProject(projectId);
-    } catch (err) {
-      console.error("[builder] save failed:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [isDemo, isSaving, loadState, projectId]);
+  const handleSave = useCallback(() => {
+    if (loadState !== "ready") return;
+    $saveTriggerCount.set($saveTriggerCount.get() + 1);
+  }, [loadState]);
 
   const toggleShortcuts = useCallback(() => setShortcutsOpen((v) => !v), []);
   useBuilderKeyboard({
@@ -325,7 +364,7 @@ export default function BuilderPage() {
       }}
     >
       {/* Topbar */}
-      <Topbar onSave={handleSave} isSaving={isSaving} isDemo={isDemo} />
+      <Topbar isDemo={isDemo} />
 
       {/* Left sidebar — only mount once ready (needs atom data for navigator/pages) */}
       {loadState === "ready" && <LeftSidebar />}

@@ -28,6 +28,9 @@ export const $isPreviewMode = computed($builderMode, (m) => m === "preview");
 export const $isDesignMode = computed($builderMode, (m) => m === "design");
 export const $isContentMode = computed($builderMode, (m) => m === "content");
 
+export const $isDirty = atom<boolean>(false);
+export const $saveTriggerCount = atom<number>(0);
+
 // ─── M10 UI state atoms ───────────────────────────────────────────────────────
 
 // Grid guides overlay on canvas (toggled by Shift+G / toolbar button)

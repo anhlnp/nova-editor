@@ -2,6 +2,16 @@
 
 ---
 
+## [25.3.0] — 2026-07-18
+
+### Feature: Save Project (Create / Update / Save As) (Minor/Gemini 3.5 Flash (Medium))
+
+- **POST API Enhancements**: Upgraded `POST /api/projects` in `src/app/api/projects/route.ts` to accept a custom `schema_json` payload from the client body (falling back to empty project schema if omitted).
+- **Save Project Dialog**: Created `src/builder/SaveProjectDialog.tsx` supporting 3 steps: Confirm (Update / Save As / Cancel) for existing projects, Create (Name, Description, Thumbnail) for demo/new projects, and Save As Copy.
+- **Reactive Save trigger**: Intercepted keyboard `Ctrl+S` shortcuts using `$saveTriggerCount` to prompt the save dialog reactively without drilling callbacks.
+- **Dirty State tracking**: Registered a `useEffect` subscription listener in `src/app/builder/[projectId]/page.tsx` on all data-store atoms (`$instances`, `$props`, `$styles`, `$cssVars`, `$interactions`, `$customCss`, `$symbols`, etc.) to toggle `$isDirty`.
+- **Save Timer & Muted styling**: Updated the Save button in `TopbarActions.tsx` to automatically disable when not dirty, change color to red on error, show "Saving..." on save, and display a dynamic saved time label (e.g. `Saved (10s ago)`).
+
 ## [25.2.3] — 2026-07-18
 
 ### Feature: Beautiful loading state for preview route (Patch/Gemini 3.5 Flash (Medium))

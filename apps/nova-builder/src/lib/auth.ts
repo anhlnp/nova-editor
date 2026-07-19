@@ -237,9 +237,30 @@ export const authOptions: NextAuthOptions = {
           const { getSupabaseAdmin } = await import("@/lib/supabaseAdmin");
           const db = getSupabaseAdmin();
           const { data } = await db.from("users").select("id").eq("email", token.email).maybeSingle();
-          if (data?.id) {
-            token.id = data.id;
-            token.sub = data.id;
+          
+          let dbId = data?.id;
+          if (!dbId) {
+            const insertPayload = {
+              email: token.email,
+              provider: (token.provider as string) || "google",
+              display_name: (token.displayName as string) || token.email,
+              github_id: (token.githubId as string) || null,
+              github_login: (token.githubLogin as string) || null,
+            };
+            const { data: inserted, error: insertErr } = await db
+              .from("users")
+              .insert(insertPayload)
+              .select("id")
+              .single();
+            if (insertErr) {
+              console.error("[auth] Failed to insert OAuth user:", insertErr);
+            } else if (inserted) {
+              dbId = inserted.id;
+            }
+          }
+          if (dbId) {
+            token.id = dbId;
+            token.sub = dbId;
           }
         } catch (e) {
           console.error("[auth] Failed to heal non-UUID session", e);
