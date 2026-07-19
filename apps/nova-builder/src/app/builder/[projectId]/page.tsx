@@ -392,6 +392,7 @@ export default function BuilderPage() {
           const newChildren = html ? parseRichHtml(html, instances) : [{ type: "text" as const, value }];
           instances.set(instanceId, { ...inst, children: newChildren } as Parameters<typeof instances.set>[1]);
         });
+        setTextEditingInstanceId(null);
         return;
       }
       // Lexical rich-text commit (M6) — carries full Instance[] tree.
@@ -413,6 +414,7 @@ export default function BuilderPage() {
             } as Parameters<typeof instances.set>[1]);
           }
         });
+        setTextEditingInstanceId(null);
         return;
       }
     };
