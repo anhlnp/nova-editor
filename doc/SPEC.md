@@ -7,7 +7,7 @@
 >
 > Companion docs: [`ADR.md`](ADR.md) (decisions) · [`COMPONENTS.md`](COMPONENTS.md) (file-by-file reference) · [`VERIFIED.md`](VERIFIED.md) (confirmed working)
 
-**Current version:** v25.2.3 · **Schema version:** `5.0`
+**Current version:** v25.3.0 · **Schema version:** `5.0`
 **Stack:** Next.js 15 (App Router) · nanostores · @webstudio-is SDK · Supabase · NextAuth v4 · pnpm + Turborepo
 
 > ✅ **WS-PARITY-AUDIT status (v22.0.0):** the three persistence/sync blockers are FIXED — WSA-1 (v20.0.0 M-S1: styles paint), WSA-2 (v21.0.0 M1: transaction sync + undo), audit #7 (v22.0.0 M2: patch autosave + `version` optimistic concurrency; ⚠️ apply migration **0020** to enable the guard — degraded unguarded mode until then). Guards: `e2e/canvas-styles.spec.ts`, `e2e/builder-canvas-sync.spec.ts`, `e2e/save-patch.spec.ts` (DB-env gated). Remaining Tier P work: `doc/ROADMAP.md`.

@@ -32,7 +32,6 @@ function timeAgo(iso: string | null): string {
 
 function SiteCard({ site, onOpen, onDelete, onAnalytics, onLeads, onClone, isCloning }: { site: Site; onOpen: () => void; onDelete: () => void; onAnalytics: () => void; onLeads: () => void; onClone: () => void; isCloning: boolean }) {
   const [hovered, setHovered] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div
@@ -126,24 +125,24 @@ function SiteCard({ site, onOpen, onDelete, onAnalytics, onLeads, onClone, isClo
           >
             ⊕
           </button>
-          {confirmDelete ? (
-            <>
-              <button onClick={() => setConfirmDelete(false)}
-                style={{ padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 12, fontFamily: C.font, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button onClick={onDelete}
-                style={{ padding: "5px 8px", borderRadius: 6, border: "none", background: C.danger, color: "#fff", fontSize: 12, fontFamily: C.font, fontWeight: 600, cursor: "pointer" }}>
-                Delete
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setConfirmDelete(true)}
-              title="Delete site"
-              style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 13, fontFamily: C.font, cursor: "pointer" }}>
-              ×
-            </button>
-          )}
+          <button onClick={onDelete}
+            title="Delete site"
+            style={{
+              padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.border}`,
+              background: "transparent", color: C.textMuted, fontSize: 13,
+              fontFamily: C.font, cursor: "pointer", transition: "all 0.15s"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = C.danger;
+              e.currentTarget.style.color = "#ff8a8a";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = C.border;
+              e.currentTarget.style.color = C.textMuted;
+            }}
+          >
+            ×
+          </button>
         </div>
       </div>
     </div>
@@ -231,6 +230,55 @@ function NewSiteModal({ onCreate, onClose }: { onCreate: (prompt: string) => Pro
   );
 }
 
+function DeleteConfirmModal({ siteName, onConfirm, onClose }: { siteName: string; onConfirm: () => Promise<void>; onClose: () => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  async function handleConfirm() {
+    setDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDeleting(false);
+      onClose();
+    }
+  }
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
+    >
+      <div style={{ width: 400, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "28px 32px", display: "flex", flexDirection: "column", gap: 16, boxShadow: "0 24px 48px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.text, fontFamily: C.font }}>Delete Project</h2>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: C.textMuted, fontSize: 18, cursor: "pointer", lineHeight: 1 }}>×</button>
+        </div>
+
+        <p style={{ margin: 0, fontSize: 13, color: C.textMuted, fontFamily: C.font, lineHeight: 1.5 }}>
+          Are you sure you want to delete <strong style={{ color: C.text }}>&ldquo;{siteName}&rdquo;</strong>? This action cannot be undone.
+        </p>
+
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
+          <button onClick={onClose}
+            style={{ padding: "8px 16px", borderRadius: 7, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 12, fontFamily: C.font, cursor: "pointer" }}>
+            Cancel
+          </button>
+          <button onClick={handleConfirm} disabled={deleting}
+            style={{ padding: "8px 22px", borderRadius: 7, border: "none", background: deleting ? "rgba(220,38,38,0.5)" : C.danger, color: "#fff", fontSize: 13, fontFamily: C.font, fontWeight: 700, cursor: deleting ? "default" : "pointer" }}>
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SitesPage() {
   const router = useRouter();
   const { t } = useI18n();
@@ -239,6 +287,7 @@ export default function SitesPage() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [deleteSite, setDeleteSite] = useState<Site | null>(null);
   const [isFreeTier, setIsFreeTier] = useState(false);
   // M13 — search, clone, notifications
   const [search, setSearch] = useState("");
@@ -307,8 +356,10 @@ export default function SitesPage() {
     try {
       const res = await fetch(`/api/projects/${siteId}/clone`, { method: "POST" });
       if (!res.ok) { alert("Clone failed. Please try again."); return; }
-      const { id: newId } = (await res.json()) as { id: string; name: string };
-      router.push(`/builder/${newId}`);
+      await loadSites();
+    } catch (err) {
+      console.error("Clone failed:", err);
+      alert("Clone failed. Please try again.");
     } finally {
       setCloning(null);
     }
@@ -494,7 +545,7 @@ export default function SitesPage() {
                 key={s.id}
                 site={s}
                 onOpen={() => router.push(`/builder/${s.id}`)}
-                onDelete={() => handleDelete(s.id)}
+                onDelete={() => setDeleteSite(s)}
                 onAnalytics={() => router.push(`/analytics/${s.id}`)}
                 onLeads={() => router.push(`/submissions/${s.id}`)}
                 onClone={() => handleClone(s.id)}
@@ -506,6 +557,16 @@ export default function SitesPage() {
       </div>
 
       {showCreate && <NewSiteModal onCreate={handleCreate} onClose={() => setShowCreate(false)} />}
+      
+      {deleteSite && (
+        <DeleteConfirmModal
+          siteName={deleteSite.name}
+          onConfirm={async () => {
+            await handleDelete(deleteSite.id);
+          }}
+          onClose={() => setDeleteSite(null)}
+        />
+      )}
     </div>
   );
 }

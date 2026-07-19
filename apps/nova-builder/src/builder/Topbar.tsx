@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@nanostores/react";
@@ -18,7 +18,7 @@ import { useI18n } from "@/lib/i18n";
 import { UI_VARS as C } from "@/lib/uiTheme";
 
 
-export function Topbar({ onSave, isSaving, isDemo }: { onSave: () => void; isSaving: boolean; isDemo?: boolean }) {
+export function Topbar({ isDemo }: { isDemo?: boolean }) {
   const { t } = useI18n();
   const router = useRouter();
   const breakpoints = useStore($breakpoints);
@@ -120,7 +120,7 @@ export function Topbar({ onSave, isSaving, isDemo }: { onSave: () => void; isSav
       <div style={{ flex: 1 }} />
 
       {/* Right: zoom + actions (extracted) */}
-      <TopbarActions onSave={onSave} isSaving={isSaving} isDemo={isDemo} />
+      <TopbarActions isDemo={isDemo} />
     </div>
   );
 }

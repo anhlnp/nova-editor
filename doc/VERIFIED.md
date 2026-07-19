@@ -1,5 +1,16 @@
 # Nova — Verified Feature Ledger
 
+## nova-builder / v25.3.0 — Save Project (Create / Update / Save As) (2026-07-18)
+
+| ID | Feature | Status |
+|---|---|---|
+| SAVE-CR1 | Saving demo project opens the Create Project dialog (Name, Description, Thumbnail) | 🟡 |
+| SAVE-UP1 | Saving existing project opens the Confirm Dialog with Update / Save As options | 🟡 |
+| SAVE-UP2 | Clicking Update invokes the PATCH save endpoint without project duplication | 🟡 |
+| SAVE-SA1 | Clicking Save As prompts for a new name and duplicates the project with client state | 🟡 |
+| SAVE-DR1 | Save button changes style dynamically based on `$isDirty` and matches saved/saving state | 🟡 |
+| SAVE-DR2 | Save button displays dynamic "Last saved Xs ago" text when not dirty | 🟡 |
+
 ## nova-builder / v25.2.3 — Preview loader & flash prevention (2026-07-18)
 
 | ID | Feature | Status |
