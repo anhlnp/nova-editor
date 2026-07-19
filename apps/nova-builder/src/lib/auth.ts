@@ -150,7 +150,7 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/login",
-    newUser: "/projects",
+    newUser: "/",
     error: "/login",
   },
 

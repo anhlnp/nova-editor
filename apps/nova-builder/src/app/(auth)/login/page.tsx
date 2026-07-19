@@ -11,7 +11,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 function AuthForm() {
   const { t } = useI18n();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/projects";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const authError = searchParams.get("error");
   const registered = searchParams.get("registered") === "true";
   const backHref = callbackUrl.startsWith("/builder/") ? callbackUrl : "/";

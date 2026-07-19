@@ -119,11 +119,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // Redirect authenticated users trying to access auth pages to /projects
+  // Redirect authenticated users trying to access auth pages to /
   if (AUTH_PAGES.has(pathname)) {
     const token = await getSessionToken(req);
     if (token) {
-      return NextResponse.redirect(new URL("/projects", getAppUrl(req)));
+      return NextResponse.redirect(new URL("/", getAppUrl(req)));
     }
   }
 

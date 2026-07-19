@@ -7,6 +7,7 @@ import { WelcomeCard } from "@/components/WelcomeCard";
 import { useI18n } from "@/lib/i18n";
 import { UI_VARS as C } from "@/lib/uiTheme";
 import { UserDropdown } from "@/components/UserDropdown";
+import { showToast } from "@/lib/nano-states";
 
 type Site = {
   id: string;
@@ -332,16 +333,24 @@ export default function SitesPage() {
 
   async function handleCreate(prompt: string) {
     const name = prompt.slice(0, 48) + (prompt.length > 48 ? "…" : "");
-    const res = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name || "New site" }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { id } = (await res.json()) as { id: string };
-    if (prompt.trim()) sessionStorage.setItem("nova-pending-prompt", prompt.trim());
-    setShowCreate(false);
-    router.push(`/builder/${id}`);
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name || "New site" }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      const { id } = (await res.json()) as { id: string };
+      if (prompt.trim()) sessionStorage.setItem("nova-pending-prompt", prompt.trim());
+      setShowCreate(false);
+      router.push(`/builder/${id}`);
+    } catch (err) {
+      console.error(err);
+      showToast(err instanceof Error ? err.message : "Failed to create project", "error");
+    }
   }
 
   async function handleDelete(siteId: string) {
@@ -355,11 +364,14 @@ export default function SitesPage() {
     setCloning(siteId);
     try {
       const res = await fetch(`/api/projects/${siteId}/clone`, { method: "POST" });
-      if (!res.ok) { alert("Clone failed. Please try again."); return; }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Clone failed.");
+      }
       await loadSites();
     } catch (err) {
       console.error("Clone failed:", err);
-      alert("Clone failed. Please try again.");
+      showToast(err instanceof Error ? err.message : "Clone failed. Please try again.", "error");
     } finally {
       setCloning(null);
     }

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { ToastNotification } from "@/components/ToastNotification";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/types";
 
@@ -33,7 +34,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // attributes onto <html> after SSR, causing a harmless hydration mismatch.
     <html lang={lang} className={inter.variable} suppressHydrationWarning>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <ToastNotification />
+        </Providers>
       </body>
     </html>
   );

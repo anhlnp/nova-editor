@@ -244,3 +244,14 @@ export const $safeModeActive = computed(
 export type CanvasMsg =
   | { type: "nova:instanceChildren"; instanceId: string; children: { type: string; value: string }[] };
 export const $pendingCanvasMsg = atom<CanvasMsg | null>(null);
+
+// Global Toast Notifications
+export type ToastMessage = {
+  type: "success" | "error" | "warning";
+  text: string;
+};
+export const $toast = atom<ToastMessage | null>(null);
+
+export function showToast(text: string, type: "success" | "error" | "warning" = "success") {
+  $toast.set({ type, text });
+}
