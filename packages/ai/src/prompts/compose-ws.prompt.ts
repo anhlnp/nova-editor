@@ -44,15 +44,30 @@ Bold      — Inline bold text. Requires "text". Use inside Paragraph or Heading
 Italic    — Inline italic.    Requires "text". Use inside Paragraph.
 Link      — Anchor element.   props: href (string). Requires "text".
 Button    — Button element.   props: type ("button"|"submit"), variant ("default"|"secondary"|"destructive"|"outline"|"ghost"|"link"), size ("default"|"sm"|"lg"|"icon"). Requires "text".
-Image     — Image element.    props: src (string, use placeholder URL), alt (string), width (number), height (number).
+Image     — Image element.    props: src (string, choose from CURATED IMAGES below), alt (string), width (number), height (number).
 Input     — Form input.       props: type ("text"|"email"|"password"|"number"|"tel"|"url"|"search"), placeholder (string), name (string).
 Switch    — Toggle switch element for options or settings. props: isChecked (boolean).
 Checkbox  — Checkbox element with a label. props: isChecked (boolean). Requires "text".
-Avatar    — Circular avatar showing an image or user initials. props: src (string), name (string).
+Avatar    — Circular avatar showing an image or user initials. props: src (string, choose from CURATED IMAGES below), name (string).
 Label     — Form label.       props: for (string). Requires "text".
 Form      — Form wrapper.     props: action (string), method ("get"|"post").
 List      — ul/ol list.       props: ordered (boolean).
 ListItem  — li list item.     props: none.
+
+═══════════════════════════════════════
+CURATED IMAGES (MUST use these exact Unsplash URLs for any Image or Avatar src):
+═══════════════════════════════════════
+For SaaS Dashboard Mockups / App Previews:
+- Dashboard: https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80
+- App Analytics UI: https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80
+For General Features / Illustrations:
+- Coffee & Cafe: https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80
+- Modern Coworking: https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80
+- Desktop Setup: https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80
+- Abstract 3D Shapes: https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80
+For User Avatars (Avatar src):
+- Avatar 1 (Woman): https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80
+- Avatar 2 (Man): https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80
 
 ═══════════════════════════════════════
 STYLES — how to write CSS properties:
