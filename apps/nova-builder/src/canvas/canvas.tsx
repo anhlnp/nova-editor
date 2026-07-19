@@ -11,6 +11,7 @@
 "use client";
 
 import { useMemo, useLayoutEffect, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { useStore } from "@nanostores/react";
 import { ReactSdkContext, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { wsImageLoader } from "@webstudio-is/image";
@@ -39,6 +40,7 @@ import {
   $cssVars,
   $interactions,
   $customCss,
+  $lastChangeWasReparent,
 } from "@/lib/nano-states";
 import { useCanvasStore } from "@/lib/sync-stores";
 import { createInstanceElement } from "./elements";
@@ -82,7 +84,37 @@ const injectStyleEl = (id: string, css: string) => {
 
 const useElementsTree = () => {
   const components = useStore($registeredComponents);
-  const instances = useStore($instances);
+  const [instances, setInstances] = useState(() => $instances.get());
+  
+  useLayoutEffect(() => {
+    return $instances.subscribe((newInstances) => {
+      if ($lastChangeWasReparent.get() && typeof document.startViewTransition === "function") {
+        const styleEl = document.createElement("style");
+        let css = "";
+        document.querySelectorAll(`[${selectorIdAttribute}]`).forEach((el) => {
+          const id = el.getAttribute(selectorIdAttribute)?.split(",")[0];
+          if (id) {
+            css += `[${selectorIdAttribute}^="${id}"] { view-transition-name: vt-${id.replace(/[^a-zA-Z0-9-]/g, "")}; }\n`;
+          }
+        });
+        styleEl.textContent = css;
+        document.head.appendChild(styleEl);
+
+        const transition = document.startViewTransition(() => {
+          flushSync(() => {
+            setInstances(newInstances);
+          });
+        });
+        
+        transition.finished.finally(() => {
+          styleEl.remove();
+        });
+      } else {
+        setInstances(newInstances);
+      }
+    });
+  }, []);
+
   const isPreviewMode = useStore($isPreviewMode);
   const breakpointsMap = useStore($breakpoints);
   const page = useStore($selectedPage);
@@ -96,7 +128,7 @@ const useElementsTree = () => {
     [breakpointsMap]
   );
 
-  return useMemo(() => {
+  const elements = useMemo(() => {
     if (!rootInstanceId) return null;
     return (
       <ReactSdkContext.Provider
@@ -123,6 +155,8 @@ const useElementsTree = () => {
       </ReactSdkContext.Provider>
     );
   }, [instances, rootInstanceId, components, isPreviewMode, breakpoints]);
+
+  return { elements, instances };
 };
 
 // ─── Canvas component ─────────────────────────────────────────────────────────
@@ -202,6 +236,69 @@ export const Canvas = () => {
 
   // Drag-reparent (FA-007): press-drag the selected element to move it.
   useEffect(() => initDragReparent(), []);
+
+  // Grid keyboard shortcuts (Alt+←/→ = move colStart; Alt+Shift+←/→ = resize span).
+  // Only fires when $isPreviewMode is false and an instance is selected.
+  useEffect(() => {
+    const COLS = 12;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ($isPreviewMode.get()) return;
+      if ($textEditingInstance.get()) return;
+      if (!e.altKey) return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+
+      const selector = $selectedInstanceSelector.get();
+      const instanceId = selector?.[0];
+      if (!instanceId) return;
+
+      // Find the element in the canvas DOM
+      const el = document.querySelector(`[${selectorIdAttribute}^="${instanceId}"]`) as HTMLElement | null;
+      if (!el) return;
+
+      // Only act on grid children
+      const parent = el.parentElement;
+      if (!parent || getComputedStyle(parent).display !== "grid") return;
+
+      // Parse current grid-column
+      const cs = getComputedStyle(el);
+      const rawStart = cs.gridColumnStart;
+      const rawEnd = cs.gridColumnEnd;
+      let colStart = rawStart !== "auto" ? parseInt(rawStart) || 1 : 1;
+      let span = COLS;
+      if (rawEnd.startsWith("span ")) {
+        span = parseInt(rawEnd.replace("span ", "")) || COLS;
+      } else if (rawEnd !== "auto") {
+        const endNum = parseInt(rawEnd);
+        if (!isNaN(endNum)) span = Math.max(1, endNum - colStart);
+      }
+
+      const dir = e.key === "ArrowRight" ? 1 : -1;
+
+      if (e.shiftKey) {
+        // Resize span
+        const newSpan = Math.max(1, Math.min(COLS - colStart + 1, span + dir));
+        if (newSpan === span) return;
+        e.preventDefault();
+        window.parent.postMessage(
+          { type: "nova:gridColumnCommit", instanceId, colStart, span: newSpan },
+          window.location.origin
+        );
+      } else {
+        // Move colStart
+        const newColStart = Math.max(1, Math.min(COLS - span + 1, colStart + dir));
+        if (newColStart === colStart) return;
+        e.preventDefault();
+        window.parent.postMessage(
+          { type: "nova:gridColumnCommit", instanceId, colStart: newColStart, span },
+          window.location.origin
+        );
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+
 
   // Scroll newly-selected instance into view with retry (M7b).
   useEffect(() => {
@@ -661,9 +758,8 @@ export const Canvas = () => {
     };
   }, []);
 
-  const elements = useElementsTree();
+  const { elements, instances } = useElementsTree();
   const components = useStore($registeredComponents);
-  const instances = useStore($instances);
 
   console.log("[canvas] Render tick details:", {
     librariesRegistered,

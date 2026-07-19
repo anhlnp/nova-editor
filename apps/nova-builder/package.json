@@ -24,6 +24,7 @@
     "@supabase/supabase-js": "^2.47.0",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",

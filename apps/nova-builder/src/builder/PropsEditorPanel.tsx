@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $instances, $props, $dataSources } from "@/lib/data-stores";
@@ -9,15 +9,7 @@ import { BindingPopover } from "./BindingPopover";
 import { nanoid } from "nanoid";
 import { UI_VARS as C, FONT } from "@/lib/uiTheme";
 import { useI18n } from "@/lib/i18n";
-
-
-type AnyProp = {
-  id: string;
-  instanceId: string;
-  name: string;
-  type: string;
-  value: unknown;
-};
+import { writeProp, type AnyProp } from "@/lib/propWriteHelper";
 
 type MetaPropDef = {
   type?: string;
@@ -27,18 +19,6 @@ type MetaPropDef = {
   options?: Array<{ label: string; name: string }>;
   description?: string;
 };
-
-function writeProp(instanceId: string, name: string, value: unknown, type: string) {
-  updateData(({ props: draft }) => {
-    const allProps = draft as Map<string, AnyProp>;
-    const existingId = [...allProps.values()].find(
-      (p) => p.instanceId === instanceId && p.name === name
-    )?.id;
-    const id = existingId ?? `prop_${nanoid(8)}`;
-    allProps.set(id, { id, instanceId, name, type, value });
-  });
-}
-
 function PropControl({
   instanceId, name, meta, current,
 }: {

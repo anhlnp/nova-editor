@@ -40,7 +40,8 @@
       "@webstudio-is/fonts": ["./src/stubs/webstudio-fonts.d.ts"],
       "@webstudio-is/template": ["./src/stubs/webstudio-template.d.ts"],
       // icons/svg is just string constants — safe to point to source
-      "@webstudio-is/icons/svg": ["../../reference/webstudio/packages/icons/src/__generated__/svg.ts"]
+      "@webstudio-is/icons/svg": ["../../reference/webstudio/packages/icons/src/__generated__/svg.ts"],
+      "@webstudio-is/design-system": ["./src/stubs/webstudio-design-system.d.ts"]
     },
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,

@@ -66,6 +66,7 @@ const nextConfig = {
   // visual QA screenshots (WS-PARITY-AUDIT §8b V-6). Dev-only; no prod effect.
   devIndicators: false,
   transpilePackages: [
+    "@webstudio-is/design-system",
     "next-auth",
     "@webstudio-is/sdk",
     "@webstudio-is/css-engine",
