@@ -34,6 +34,7 @@
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sync-client": "workspace:*",
     "bcryptjs": "^3.0.3",
+    "context.dev": "^2.5.0",
     "framer-motion": "^12.42.2",
     "immer": "^10.1.1",
     "immerhin": "^0.10.0",

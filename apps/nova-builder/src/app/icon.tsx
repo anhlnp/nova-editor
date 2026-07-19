@@ -2,7 +2,6 @@ import { ImageResponse } from "next/og";
 import { LogoIcon } from "@/components/LogoIcon";
 
 // Route segment config
-export const runtime = "edge";
 
 // Image metadata
 export const size = {

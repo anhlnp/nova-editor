@@ -251,6 +251,20 @@ export interface I18nLandingDictionary {
   ctaSubtitle: string;
   getStartedFree: string;
   tryDemo: string;
+  simplifyDesignLead: string;
+  simplifyDesignAccent: string;
+  buildEverythingLead: string;
+  buildEverythingAccent: string;
+  buildEverythingDesc: string;
+  deployAnythingLead: string;
+  deployAnythingAccent: string;
+  deployAnythingDesc: string;
+  growProductTitle: string;
+  growProductDesc: string;
+  testimonialsTitle: string;
+  testimonials: { name: string; quote: string; }[];
+  newsEyebrow: string;
+  newsTitle: string;
 }
 
 export interface I18nFaqItem {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Inter } from "next/font/google";
+import { Inter, DM_Serif_Display, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ToastNotification } from "@/components/ToastNotification";
@@ -11,6 +11,19 @@ const inter = Inter({
   subsets: ["latin", "vietnamese"],
   display: "swap",
   variable: "--font-inter",
+});
+
+const dmSerifDisplay = DM_Serif_Display({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-dm-serif",
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto-mono",
 });
 
 async function localeFromCookie(): Promise<Locale> {
@@ -32,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     // suppressHydrationWarning: browser extensions (e.g. Katalon) may inject
     // attributes onto <html> after SSR, causing a harmless hydration mismatch.
-    <html lang={lang} className={inter.variable} suppressHydrationWarning>
+    <html lang={lang} className={`${inter.variable} ${dmSerifDisplay.variable} ${robotoMono.variable}`} suppressHydrationWarning>
       <body>
         <Providers>
           {children}

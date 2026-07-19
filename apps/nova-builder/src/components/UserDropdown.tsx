@@ -26,14 +26,14 @@ const colorModes = {
   dark: {
     avatarBorder: "rgba(255,255,255,0.08)",
     buttonHoverBg: "rgba(255,255,255,0.05)",
-    dropdownBg: "#0f172a",
-    dropdownBorder: "rgba(255,255,255,0.08)",
-    dropdownShadow: "0 12px 32px rgba(0,0,0,0.4)",
-    nameColor: "#e2e8f0",
-    emailColor: "rgba(255,255,255,0.60)",
-    linkColor: "#e2e8f0",
-    linkHoverBg: "rgba(255,255,255,0.05)",
-    signOutHoverBg: "rgba(239, 68, 68, 0.1)",
+    dropdownBg: "#2e2e2e",
+    dropdownBorder: "rgba(255,255,255,0.1)",
+    dropdownShadow: "rgba(0, 0, 0, 0.2) 0px 18px 20px 0px",
+    nameColor: "#f5f5f7",
+    emailColor: "#9f9fa0",
+    linkColor: "#f5f5f7",
+    linkHoverBg: "#3f4041",
+    signOutHoverBg: "rgba(239, 68, 68, 0.15)",
   }
 };
 

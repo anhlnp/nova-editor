@@ -3,9 +3,14 @@
 import React, { useState } from "react";
 import { useI18n, Locale } from "@/lib/i18n";
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  theme?: "light" | "dark";
+}
+
+export function LanguageSwitcher({ theme = "light" }: LanguageSwitcherProps) {
   const { locale, setLocale, autoDetectByIp, setAutoDetectByIp, t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
+  const isDark = theme === "dark";
 
   const handleSelectLocale = (targetLocale: Locale) => {
     setLocale(targetLocale);
@@ -18,12 +23,16 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md focus:outline-none ${
+          isDark
+            ? "text-[#fafafa] bg-white/10 border border-white/15 hover:bg-white/20"
+            : "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 focus:ring-2 focus:ring-indigo-500"
+        }`}
         aria-expanded={isOpen}
       >
         <span>{locale === "vi" ? "🇻🇳 VI" : "🇺🇸 EN"}</span>
         <svg
-          className="w-3.5 h-3.5 text-slate-400"
+          className={`w-3.5 h-3.5 ${isDark ? "text-slate-400" : "text-slate-400"}`}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
@@ -37,8 +46,14 @@ export function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-1.5 w-64 origin-top-right rounded-lg bg-white p-2 shadow-lg ring-1 ring-black/5 focus:outline-none">
-          <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <div className={`absolute right-0 z-50 mt-1.5 w-64 origin-top-right rounded-lg p-2 shadow-lg ring-1 focus:outline-none ${
+          isDark
+            ? "bg-[#2e2e2e] border border-white/10 ring-white/10"
+            : "bg-white ring-black/5"
+        }`}>
+          <div className={`px-2 py-1.5 text-xs font-semibold uppercase tracking-wider ${
+            isDark ? "text-slate-400" : "text-slate-500"
+          }`}>
             {t.settings.languageTitle}
           </div>
           <div className="space-y-1">
@@ -47,13 +62,13 @@ export function LanguageSwitcher() {
               onClick={() => handleSelectLocale("vi")}
               className={`w-full flex items-center justify-between rounded-md px-2.5 py-2 text-xs font-medium transition-colors ${
                 locale === "vi"
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "text-slate-700 hover:bg-slate-50"
+                  ? (isDark ? "bg-white/10 text-white" : "bg-indigo-50 text-indigo-600")
+                  : (isDark ? "text-slate-300 hover:bg-white/5" : "text-slate-700 hover:bg-slate-50")
               }`}
             >
               <span>🇻🇳 {t.settings.vietnameseLabel}</span>
               {locale === "vi" && (
-                <span className="text-indigo-600 font-bold">✓</span>
+                <span className={isDark ? "text-white font-bold" : "text-indigo-600 font-bold"}>✓</span>
               )}
             </button>
             <button
@@ -61,19 +76,21 @@ export function LanguageSwitcher() {
               onClick={() => handleSelectLocale("en")}
               className={`w-full flex items-center justify-between rounded-md px-2.5 py-2 text-xs font-medium transition-colors ${
                 locale === "en"
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "text-slate-700 hover:bg-slate-50"
+                  ? (isDark ? "bg-white/10 text-white" : "bg-indigo-50 text-indigo-600")
+                  : (isDark ? "text-slate-300 hover:bg-white/5" : "text-slate-700 hover:bg-slate-50")
               }`}
             >
               <span>🇺🇸 {t.settings.englishLabel}</span>
               {locale === "en" && (
-                <span className="text-indigo-600 font-bold">✓</span>
+                <span className={isDark ? "text-white font-bold" : "text-indigo-600 font-bold"}>✓</span>
               )}
             </button>
           </div>
 
-          <div className="mt-2 border-t border-slate-100 pt-2">
-            <label className="flex items-center justify-between px-2.5 py-1.5 text-xs text-slate-600 cursor-pointer hover:bg-slate-50 rounded-md">
+          <div className={`mt-2 border-t pt-2 ${isDark ? "border-white/10" : "border-slate-100"}`}>
+            <label className={`flex items-center justify-between px-2.5 py-1.5 text-xs cursor-pointer rounded-md ${
+              isDark ? "text-slate-300 hover:bg-white/5" : "text-slate-600 hover:bg-slate-50"
+            }`}>
               <span>{t.settings.autoDetectIpLabel}</span>
               <input
                 type="checkbox"
