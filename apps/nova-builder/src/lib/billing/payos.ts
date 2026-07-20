@@ -4,10 +4,10 @@ export const PAYOS_API_URL = "https://api-merchant.payos.vn/v2/payment-requests"
 
 // Plan slug → one-time VND price.
 export const PAYOS_PRICES_VND: Record<string, number> = {
-  pro: 10000,
-  max: 10000,
-  team: 10000,
-  credits: 10000,
+  pro: 500000,
+  max: 1275000,
+  team: 750000,
+  credits: 100000,
 };
 
 export function buildPayosSignData(fields: {

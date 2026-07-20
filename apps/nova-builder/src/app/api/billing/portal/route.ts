@@ -18,10 +18,10 @@ const LS_VARIANTS: Record<string, string | undefined> = {
 
 // Plan → one-time VND price for PayOS (annual purchase / top-up pack).
 const PAYOS_PRICES_VND: Record<string, number> = {
-  pro: 10000,
-  max: 10000,
-  team: 10000,
-  credits: 10000, // 500-credit top-up pack
+  pro: 290_000,
+  max: 690_000,
+  team: 1_190_000,
+  credits: 99_000, // 500-credit top-up pack
 };
 
 export async function GET(req: Request) {
