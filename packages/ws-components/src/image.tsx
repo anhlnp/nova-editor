@@ -13,7 +13,7 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<
   ElementRef<typeof defaultTag>,
-  Props & { $webstudio$canvasOnly$assetId?: string | undefined }
+  Props & { $webstudio$canvasOnly$assetId?: string | undefined; objectfit?: string }
 >(
   (
     {
@@ -22,8 +22,10 @@ export const Image = forwardRef<
       height,
       optimize = true,
       decoding: decodingProp,
-      // @todo: it's a hack made for the builder and should't be in the runtime at all.
+      // @todo: it is a hack made for the builder and should not be in the runtime at all.
       $webstudio$canvasOnly$assetId,
+      objectfit,
+      style: styleProp,
       ...props
     },
     ref
@@ -44,7 +46,7 @@ export const Image = forwardRef<
       // Avoid image flickering on switching from preview to asset (during upload)
       decoding = "sync";
 
-      // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state (we don't know asset src during uploading)
+      // use assetId as key to not recreate the image if it is switched from uploading to uploaded asset state
       key = $webstudio$canvasOnly$assetId ?? src;
 
       // NaN width and height means that the image is not yet uploaded, and should not be optimized on canvas
@@ -60,15 +62,20 @@ export const Image = forwardRef<
       }
     }
 
+    // Build inline style to enforce width/height constraints and object-fit
+    const mergedStyle: React.CSSProperties = { ...styleProp as React.CSSProperties };
+    if (width !== undefined && !Number.isNaN(Number(width))) {
+      mergedStyle.width = `${width}px`;
+    }
+    if (height !== undefined && !Number.isNaN(Number(height))) {
+      mergedStyle.height = `${height}px`;
+    }
+    if (objectfit) {
+      mergedStyle.objectFit = objectfit as React.CSSProperties["objectFit"];
+    }
+
     return (
       <WebstudioImage
-        /**
-         * `key` is needed to recreate the image in case of asset change in builder,
-         * this gives immediate feedback when an asset is changed.
-         *
-         * In non-builder mode, key on images are usually also a good idea,
-         * prevents showing outdated images on route change.
-         **/
         key={key}
         loading={loading}
         decoding={decoding}
@@ -78,6 +85,7 @@ export const Image = forwardRef<
         {...props}
         loader={imageLoader}
         src={src}
+        style={mergedStyle}
         ref={ref}
       />
     );

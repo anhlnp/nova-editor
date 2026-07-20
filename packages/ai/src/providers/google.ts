@@ -4,8 +4,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AIProvider, AIMessage, CompleteOptions } from "./base.js";
 
 const MODELS = {
-  planner: "gemini-2.5-flash",
-  patcher: "gemini-2.5-pro",
+  planner: "gemini-2.0-flash",
+  patcher: "gemini-2.0-flash",
 } as const;
 
 export class GoogleProvider implements AIProvider {

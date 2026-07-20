@@ -3,7 +3,8 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { $registeredComponentMetas, $selectedInstanceSelector } from "@/lib/nano-states";
 import { updateData } from "@/lib/transactions";
-import { $pages, $instances } from "@/lib/data-stores";
+import { $pages, $instances, $breakpoints } from "@/lib/data-stores";
+import { ensureLocalSource } from "@/lib/style-object-model";
 import { useDraggable, type DropTarget } from "./useDraggable";
 import { getRegistry } from "./ComponentRegistry";
 
@@ -184,7 +185,7 @@ export function ComponentsPanel() {
 
     const newInstance = creationResult.instance;
 
-    updateData(({ instances: draft, props }) => {
+    updateData(({ instances: draft, props, styles, styleSources, styleSourceSelections, breakpoints }) => {
       // 1. Insert main instance
       draft.set(newId, newInstance as Parameters<typeof draft.set>[1]);
 
@@ -214,6 +215,26 @@ export function ComponentsPanel() {
             newChildren.push(child);
           }
           draft.set(parentId, { ...parent, children: newChildren });
+        }
+      }
+
+      // 5. For Image components: inject object-fit: cover as a default CSS style
+      if (newInstance.component === "Image") {
+        // Find the base (smallest) breakpoint to attach the style to
+        const bps = [...(breakpoints as Map<string, { id: string; minWidth?: number }>).values()];
+        const baseBp = bps.sort((a, b) => (a.minWidth ?? 0) - (b.minWidth ?? 0))[0];
+        const bpId = baseBp?.id;
+        if (bpId) {
+          const sources = styleSources as Map<string, { id: string; type: string }>;
+          const selections = styleSourceSelections as Map<string, { instanceId: string; values: string[] }>;
+          const sourceId = ensureLocalSource(newId, sources, selections);
+          const declKey = `${sourceId}:${bpId}:objectFit:`;
+          (styles as Map<string, unknown>).set(declKey, {
+            styleSourceId: sourceId,
+            breakpointId: bpId,
+            property: "objectFit",
+            value: { type: "keyword", value: "cover" },
+          });
         }
       }
     });

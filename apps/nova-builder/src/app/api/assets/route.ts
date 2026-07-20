@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { nanoid } from "nanoid";
 import { uploadToR2, makeAssetKey, assetPublicUrl, type NovaAsset } from "@/lib/r2";
+import { uploadToImageKit, projectFolder, isImageKitConfigured } from "@/lib/imagekit";
+import { getFolder } from "@/lib/db-folders";
 
 // Parse image dimensions from raw buffer headers (no external dep).
 function getImageDimensions(buf: Buffer, mime: string): { width?: number; height?: number } {
@@ -30,9 +32,6 @@ function getImageDimensions(buf: Buffer, mime: string): { width?: number; height
   return {};
 }
 
-// Extract font family/weight/style from the file name heuristic.
-// Full sfnt parsing would require a binary font parser not available here;
-// name-convention inference covers 95%+ of web font files.
 function getFontMetadata(filename: string): {
   fontFamily?: string;
   fontWeight?: number;
@@ -41,7 +40,6 @@ function getFontMetadata(filename: string): {
   const base = filename.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
   const lower = base.toLowerCase();
 
-  // Weight detection by keyword
   const WEIGHT_MAP: [string, number][] = [
     ["thin", 100], ["extralight", 200], ["extra light", 200],
     ["light", 300], ["regular", 400], ["normal", 400], ["medium", 500],
@@ -58,7 +56,6 @@ function getFontMetadata(filename: string): {
     lower.includes("italic") ? "italic" :
     lower.includes("oblique") ? "oblique" : "normal";
 
-  // Family = filename stripped of weight/style keywords (title-case)
   const stripWords = new Set([
     "thin","extralight","extra","light","regular","normal","medium",
     "semibold","semi","bold","demibold","demi","extrabold","black","heavy",
@@ -104,6 +101,7 @@ export async function POST(req: Request) {
 
   const file = formData.get("file") as File | null;
   const projectId = formData.get("projectId") as string | null;
+  const folderId = (formData.get("folderId") as string | null) || null;
 
   if (!file || !projectId) {
     return NextResponse.json({ error: "Missing file or projectId" }, { status: 400 });
@@ -123,31 +121,75 @@ export async function POST(req: Request) {
   const assetType: NovaAsset["type"] = IMAGE_TYPES[file.type] ? "image" : "font";
   const assetId = nanoid();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const key = makeAssetKey(projectId, assetId, safeName);
   const data = Buffer.from(await file.arrayBuffer());
-
-  try {
-    await uploadToR2(key, data, file.type);
-  } catch (err) {
-    console.error("[api/assets] R2 upload failed:", err);
-    return NextResponse.json({ error: "Upload to R2 failed" }, { status: 500 });
-  }
 
   const dims = assetType === "image" ? getImageDimensions(data, file.type) : {};
   const fontMeta = assetType === "font" ? getFontMetadata(file.name) : {};
 
-  const asset: NovaAsset = {
-    id: assetId,
-    name: file.name,
-    type: assetType,
-    format,
-    size: file.size,
-    url: assetPublicUrl(key),
-    key,
-    createdAt: new Date().toISOString(),
-    ...dims,
-    ...fontMeta,
-  };
+  let asset: NovaAsset;
+
+  if (isImageKitConfigured()) {
+    // ── ImageKit upload path ────────────────────────────────────────────────
+    // Resolve folder name for path construction
+    let folderName: string | undefined;
+    if (folderId) {
+      try {
+        const folder = await getFolder(folderId);
+        folderName = folder?.name;
+      } catch { /* folder lookup failed — upload to root */ }
+    }
+
+    const ikFolder = projectFolder(projectId, folderName);
+
+    let ikResult;
+    try {
+      ikResult = await uploadToImageKit(data, safeName, ikFolder);
+    } catch (err) {
+      console.error("[api/assets] ImageKit upload failed:", err);
+      return NextResponse.json({ error: "Upload to ImageKit failed" }, { status: 500 });
+    }
+
+    asset = {
+      id: assetId,
+      name: file.name,
+      type: assetType,
+      format,
+      size: file.size,
+      url: ikResult.url,
+      key: ikResult.fileId,       // repurpose key field to store fileId for deletion
+      imagekitFileId: ikResult.fileId,
+      createdAt: new Date().toISOString(),
+      folderId,
+      // ImageKit returns dimensions directly for images
+      width: ikResult.width ?? dims.width,
+      height: ikResult.height ?? dims.height,
+      ...fontMeta,
+    };
+  } else {
+    // ── R2 fallback path (original behavior, unchanged) ─────────────────────
+    const key = makeAssetKey(projectId, assetId, safeName);
+
+    try {
+      await uploadToR2(key, data, file.type);
+    } catch (err) {
+      console.error("[api/assets] R2 upload failed:", err);
+      return NextResponse.json({ error: "Upload to R2 failed" }, { status: 500 });
+    }
+
+    asset = {
+      id: assetId,
+      name: file.name,
+      type: assetType,
+      format,
+      size: file.size,
+      url: assetPublicUrl(key),
+      key,
+      createdAt: new Date().toISOString(),
+      folderId,
+      ...dims,
+      ...fontMeta,
+    };
+  }
 
   return NextResponse.json({ asset }, { status: 201 });
 }
