@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useMemo, useLayoutEffect, useEffect, useState } from "react";
+import { useMemo, useLayoutEffect, useEffect, useState, useRef } from "react";
 import { flushSync } from "react-dom";
 import { useStore } from "@nanostores/react";
 import { ReactSdkContext, selectorIdAttribute } from "@webstudio-is/react-sdk";
@@ -49,6 +49,7 @@ import { Slot, slotMeta } from "./slot";
 import { shadcnComponents, shadcnMetas } from "./shadcn-components";
 import { SelectionOverlay } from "./SelectionOverlay";
 import { TextEditOverlay } from "./TextEditOverlay";
+import { ImageLightbox, $lightboxImage } from "./ImageLightbox";
 import { initDragReparent } from "./dragReparent";
 import {
   mountStyles,
@@ -85,10 +86,17 @@ const injectStyleEl = (id: string, css: string) => {
 const useElementsTree = () => {
   const components = useStore($registeredComponents);
   const [instances, setInstances] = useState(() => $instances.get());
-  
+  // useRef so the guard persists across re-renders (a plain `let` resets every render).
+  const activeTransitionRef = useRef<ViewTransition | null>(null);
+
   useLayoutEffect(() => {
     return $instances.subscribe((newInstances) => {
-      if ($lastChangeWasReparent.get() && typeof document.startViewTransition === "function") {
+      const canAnimate =
+        $lastChangeWasReparent.get() &&
+        typeof document.startViewTransition === "function" &&
+        activeTransitionRef.current === null;
+
+      if (canAnimate) {
         const styleEl = document.createElement("style");
         let css = "";
         document.querySelectorAll(`[${selectorIdAttribute}]`).forEach((el) => {
@@ -100,15 +108,26 @@ const useElementsTree = () => {
         styleEl.textContent = css;
         document.head.appendChild(styleEl);
 
-        const transition = document.startViewTransition(() => {
-          flushSync(() => {
-            setInstances(newInstances);
+        try {
+          const transition = document.startViewTransition(() => {
+            flushSync(() => {
+              setInstances(newInstances);
+            });
           });
-        });
-        
-        transition.finished.finally(() => {
+          activeTransitionRef.current = transition;
+          // .catch handles AbortError when the transition is interrupted mid-flight.
+          transition.finished
+            .catch(() => {/* transition was skipped/aborted — no action needed */})
+            .finally(() => {
+              styleEl.remove();
+              activeTransitionRef.current = null;
+            });
+        } catch {
+          // startViewTransition threw InvalidStateError (rapid drops) — skip animation.
           styleEl.remove();
-        });
+          activeTransitionRef.current = null;
+          setInstances(newInstances);
+        }
       } else {
         setInstances(newInstances);
       }
@@ -594,6 +613,161 @@ export const Canvas = () => {
     };
   }, []);
 
+  // ── Asset-image drag-and-drop (HTML5 DnD) ────────────────────────────────────
+  // Builder's AssetsPanel sets dataTransfer type "nova/asset-image" on dragstart.
+  // The canvas iframe receives native dragover/drop because the browser routes HTML5
+  // DnD events across iframes automatically (unlike PointerEvents).
+  useEffect(() => {
+    if ($isPreviewMode.get()) return;
+
+    const ASSET_DND_TYPE = "nova/asset-image";
+    const ACCENT = "#7c3aed";
+
+    // Highlight element under pointer during asset drag
+    let hoverEl: HTMLElement | null = null;
+    let highlightEl: HTMLDivElement | null = null;
+
+    const getOrCreateHighlight = (): HTMLDivElement => {
+      if (!highlightEl) {
+        highlightEl = document.createElement("div");
+        highlightEl.id = "nova-asset-drop-highlight";
+        highlightEl.style.cssText =
+          "position:fixed;pointer-events:none;z-index:2147483002;box-sizing:border-box;" +
+          `border:2px solid ${ACCENT};background:rgba(124,58,237,0.12);border-radius:3px;` +
+          "transition:all 0.06s ease;";
+        document.body.appendChild(highlightEl);
+      }
+      return highlightEl;
+    };
+
+    const clearHighlight = () => {
+      highlightEl?.remove();
+      highlightEl = null;
+      hoverEl = null;
+    };
+
+    const findTarget = (x: number, y: number): { el: HTMLElement; instanceId: string } | null => {
+      const el = document.elementFromPoint(x, y)?.closest(`[${selectorIdAttribute}]`) as HTMLElement | null;
+      if (!el) return null;
+      const raw = el.getAttribute(selectorIdAttribute) ?? "";
+      const instanceId = raw.split(",")[0];
+      return instanceId ? { el, instanceId } : null;
+    };
+
+    const paintHighlight = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect();
+      const h = getOrCreateHighlight();
+      h.style.left = `${r.left}px`;
+      h.style.top = `${r.top}px`;
+      h.style.width = `${r.width}px`;
+      h.style.height = `${r.height}px`;
+    };
+
+    const onDragOver = (e: DragEvent) => {
+      if ($isPreviewMode.get()) return;
+      if (!e.dataTransfer?.types.includes(ASSET_DND_TYPE)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+
+      const target = findTarget(e.clientX, e.clientY);
+      if (!target) { clearHighlight(); return; }
+      if (target.el !== hoverEl) {
+        hoverEl = target.el;
+        paintHighlight(target.el);
+      }
+    };
+
+    const onDragLeave = (e: DragEvent) => {
+      // Only clear if leaving the document (not just crossing elements)
+      if (!e.relatedTarget) clearHighlight();
+    };
+
+    const onDrop = (e: DragEvent) => {
+      if ($isPreviewMode.get()) return;
+      if (!e.dataTransfer?.types.includes(ASSET_DND_TYPE)) return;
+      e.preventDefault();
+      clearHighlight();
+
+      const raw = e.dataTransfer.getData(ASSET_DND_TYPE);
+      if (!raw) return;
+
+      let payload: { assetId: string; url: string; name: string };
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        return;
+      }
+
+      const target = findTarget(e.clientX, e.clientY);
+      const instances = $instances.get();
+
+      // Determine if we dropped onto an existing Image instance
+      const isImageInstance = target
+        ? instances.get(target.instanceId)?.component === "Image"
+        : false;
+
+      if (isImageInstance && target) {
+        // Update existing Image's src prop
+        window.parent.postMessage(
+          {
+            type: "nova:assetImageCommit",
+            action: "updateSrc",
+            instanceId: target.instanceId,
+            assetId: payload.assetId,
+            url: payload.url,
+            name: payload.name,
+          },
+          window.location.origin
+        );
+      } else {
+        // Insert new Image instance at the drop target
+        // Find parent and position
+        let parentId: string | null = null;
+        let position: "into" | "above" | "below" = "into";
+
+        if (target) {
+          const targetInst = instances.get(target.instanceId);
+          // Determine if target is a container: drop "into" containers, "below" leaves
+          const containerComponents = new Set([
+            "Body", "Box", "HeroUIRow", "HeroUICol", "shadcn:Card",
+            "shadcn:CardContent", "shadcn:CardHeader", "Slot",
+          ]);
+          const isContainer = containerComponents.has(targetInst?.component ?? "");
+          if (isContainer) {
+            parentId = target.instanceId;
+            position = "into";
+          } else {
+            parentId = target.instanceId;
+            position = "below";
+          }
+        }
+
+        window.parent.postMessage(
+          {
+            type: "nova:assetImageCommit",
+            action: "insertImage",
+            targetInstanceId: parentId,
+            position,
+            assetId: payload.assetId,
+            url: payload.url,
+            name: payload.name,
+          },
+          window.location.origin
+        );
+      }
+    };
+
+    document.addEventListener("dragover", onDragOver);
+    document.addEventListener("dragleave", onDragLeave);
+    document.addEventListener("drop", onDrop);
+    return () => {
+      document.removeEventListener("dragover", onDragOver);
+      document.removeEventListener("dragleave", onDragLeave);
+      document.removeEventListener("drop", onDrop);
+      clearHighlight();
+    };
+  }, []);
+
   // ── Link / form interceptor in design mode (M7b) ────────────────────────────
   // Prevent navigation when clicking <a> or form submit in design mode.
   useEffect(() => {
@@ -685,6 +859,26 @@ export const Canvas = () => {
     // Double-click activates the Lexical TextEditOverlay (React component).
     // No more contentEditable or execCommand.
     const dblClickHandler = (e: MouseEvent) => {
+      // ── Image preview on double-click (canvas mode) ─────────────────────────
+      if (!$isPreviewMode.get()) {
+        const imgTarget = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
+        if (imgTarget instanceof HTMLElement) {
+          const raw = imgTarget.getAttribute(selectorIdAttribute);
+          const iid = raw?.split(",")[0];
+          if (iid) {
+            const inst = $instances.get().get(iid);
+            if (inst?.component === "Image") {
+              e.preventDefault();
+              e.stopPropagation();
+              const imgEl = imgTarget.tagName === "IMG" ? imgTarget as HTMLImageElement : imgTarget.querySelector("img");
+              if (imgEl) {
+                $lightboxImage.set({ src: imgEl.src, alt: imgEl.alt || "Image" });
+              }
+              return;
+            }
+          }
+        }
+      }
       if ($isPreviewMode.get()) return;
       const target = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
       if (!target || !(target instanceof HTMLElement)) return;
@@ -746,12 +940,32 @@ export const Canvas = () => {
       );
     };
 
+    // ── Image preview in preview mode (single click) ────────────────────────
+    const imagePreviewHandler = (e: MouseEvent) => {
+      if (!$isPreviewMode.get()) return;
+      const el = (e.target as Element)?.closest(`[${selectorIdAttribute}]`);
+      if (!el || !(el instanceof HTMLElement)) return;
+      const raw = el.getAttribute(selectorIdAttribute);
+      const instanceId = raw?.split(",")[0];
+      if (!instanceId) return;
+      const inst = $instances.get().get(instanceId);
+      if (inst?.component !== "Image") return;
+      e.preventDefault();
+      e.stopPropagation();
+      const imgEl = el.tagName === "IMG" ? el as HTMLImageElement : el.querySelector("img");
+      if (imgEl) {
+        $lightboxImage.set({ src: imgEl.src, alt: imgEl.alt || "Image" });
+      }
+    };
+
     document.addEventListener("click", clickHandler);
+    document.addEventListener("click", imagePreviewHandler);
     document.addEventListener("mouseover", hoverHandler);
     document.addEventListener("dblclick", dblClickHandler);
     document.addEventListener("contextmenu", contextMenuHandler);
     return () => {
       document.removeEventListener("click", clickHandler);
+      document.removeEventListener("click", imagePreviewHandler);
       document.removeEventListener("mouseover", hoverHandler);
       document.removeEventListener("dblclick", dblClickHandler);
       document.removeEventListener("contextmenu", contextMenuHandler);
@@ -779,6 +993,7 @@ export const Canvas = () => {
       {elements}
       <SelectionOverlay />
       <TextEditOverlay />
+      <ImageLightbox />
     </>
   );
 };

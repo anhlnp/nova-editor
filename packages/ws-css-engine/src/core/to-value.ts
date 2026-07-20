@@ -88,6 +88,12 @@ export const toValue = (
   }
 
   if (value.type === "color") {
+    // Guard: legacy Nova documents may produce {type:"color"} shapes without
+    // the SDK-standard `components` tuple. Return an empty string rather than
+    // crashing on destructure.
+    if (!Array.isArray(value.components)) {
+      return "";
+    }
     let [c1, c2, c3] = value.components;
     const alpha =
       typeof value.alpha === "number" ? value.alpha : toValue(value.alpha);
