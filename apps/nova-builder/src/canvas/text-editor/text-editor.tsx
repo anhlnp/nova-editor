@@ -111,6 +111,70 @@ function EditorCommands({
     );
   }, [editor, commit]);
 
+  useEffect(() => {
+    const handleOuterClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      const editorElement = editor.getRootElement();
+      if (!editorElement) return;
+
+      // If the click is inside the editor, do nothing.
+      if (editorElement.contains(target)) {
+        return;
+      }
+
+      // If the click is on the parent page's formatting toolbar, do nothing.
+      if (target?.closest?.('[data-text-format-toolbar="true"]') || target?.closest?.('.text-format-toolbar')) {
+        return;
+      }
+
+      commit();
+    };
+
+    document.addEventListener("mousedown", handleOuterClick, true);
+
+    let parentDoc: Document | null = null;
+    try {
+      if (window.parent && window.parent !== window) {
+        parentDoc = window.parent.document;
+        parentDoc.addEventListener("mousedown", handleOuterClick, true);
+      }
+    } catch (err) {
+      console.warn("Could not attach parent document mousedown listener", err);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOuterClick, true);
+      if (parentDoc) {
+        parentDoc.removeEventListener("mousedown", handleOuterClick, true);
+      }
+    };
+  }, [editor, commit]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      commit();
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    let parentWindow: Window | null = null;
+    try {
+      if (window.parent && window.parent !== window) {
+        parentWindow = window.parent;
+        parentWindow.addEventListener("scroll", handleScroll, { passive: true });
+      }
+    } catch (err) {
+      console.warn("Could not attach parent window scroll listener", err);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (parentWindow) {
+        parentWindow.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [commit]);
+
   // Builder → canvas: format commands forwarded via postMessage
   useEffect(() => {
     function handler(e: MessageEvent) {

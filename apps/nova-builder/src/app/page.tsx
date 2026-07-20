@@ -445,7 +445,7 @@ export default function Home() {
           letter-spacing: -0.025em;
         }
         .origin-display-heading em {
-          font-style: italic;
+          font-style: normal;
           font-weight: 300;
         }
 
@@ -460,7 +460,7 @@ export default function Home() {
 
         .origin-text-italics {
           font-family: var(--font-lyon-display);
-          font-style: italic;
+          font-style: normal;
           font-weight: 300;
         }
 

@@ -10,6 +10,7 @@ export function TextFormatToolbar({ iframeRef }: { iframeRef: RefObject<HTMLIFra
 
   return (
     <div
+      data-text-format-toolbar="true"
       style={{
         position: "absolute",
         top: 8,
