@@ -3,18 +3,19 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { nanoid } from "nanoid";
 import { uploadToR2, makeAssetKey, assetPublicUrl, type NovaAsset } from "@/lib/r2";
+import { uploadToImageKit, projectFolder, isImageKitConfigured } from "@/lib/imagekit";
+import { getFolder } from "@/lib/db-folders";
 
 // Chunked upload protocol (bypasses the 10 MB Workers body limit):
-//   POST /api/assets/upload           — initiate: { projectId, fileName, fileType, fileSize }
-//                                        returns { uploadId, assetId, key }
-//   PUT  /api/assets/upload           — append chunk: FormData { uploadId, chunk (Blob), partIndex, totalParts }
-//                                        returns { ok: true, received: N }
-//   PATCH /api/assets/upload          — complete: { uploadId, assetId, key, fileSize, fileType, fileName }
-//                                        returns { asset }
+//   POST  /api/assets/upload  — initiate: { projectId, fileName, fileType, fileSize, totalParts, folderId? }
+//                               returns { uploadId, assetId, key }
+//   PUT   /api/assets/upload  — append chunk: FormData { uploadId, chunk (Blob), partIndex, totalParts }
+//                               returns { ok: true, received: N }
+//   PATCH /api/assets/upload  — complete: { uploadId, assetId, key, fileSize, fileType, fileName }
+//                               returns { asset }
 //
 // In-memory store (per-Worker instance) — sufficient for single-worker dev.
 // In production with multiple Workers instances, use R2 multipart API or KV.
-// This implementation assembles parts in memory (max ~50 MB per upload).
 
 type PendingUpload = {
   assetId: string;
@@ -22,6 +23,7 @@ type PendingUpload = {
   key: string;
   parts: Buffer[];
   totalParts: number;
+  folderId: string | null;
 };
 
 const pending = new Map<string, PendingUpload>();
@@ -72,8 +74,9 @@ export async function POST(req: Request) {
     fileName?: string;
     fileType?: string;
     totalParts?: number;
+    folderId?: string | null;
   };
-  const { projectId, fileName, fileType, totalParts } = body;
+  const { projectId, fileName, fileType, totalParts, folderId = null } = body;
   if (!projectId || !fileName || !fileType || !totalParts) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
@@ -81,9 +84,13 @@ export async function POST(req: Request) {
   const assetId = nanoid();
   const uploadId = nanoid();
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+  // key is a placeholder for R2; for ImageKit path is resolved at PATCH time
   const key = makeAssetKey(projectId, assetId, safeName);
 
-  pending.set(uploadId, { assetId, projectId, key, parts: [], totalParts });
+  pending.set(uploadId, {
+    assetId, projectId, key, parts: [], totalParts,
+    folderId: folderId ?? null,
+  });
 
   return NextResponse.json({ uploadId, assetId, key });
 }
@@ -118,7 +125,7 @@ export async function PUT(req: Request) {
   return NextResponse.json({ ok: true, received: partIndex });
 }
 
-// PATCH — complete upload, reassemble, push to R2
+// PATCH — complete upload, reassemble, push to ImageKit or R2
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -141,29 +148,72 @@ export async function PATCH(req: Request) {
   if (entry.assetId !== assetId) return NextResponse.json({ error: "Mismatch" }, { status: 400 });
 
   const data = Buffer.concat(entry.parts.filter(Boolean));
+  const { projectId, folderId } = entry;
   pending.delete(uploadId);
-
-  try {
-    await uploadToR2(entry.key, data, fileType);
-  } catch (err) {
-    console.error("[api/assets/upload] R2 upload failed:", err);
-    return NextResponse.json({ error: "R2 upload failed" }, { status: 500 });
-  }
 
   const isFont = FONT_TYPES.has(fileType);
   const fontMeta = isFont ? getFontMetadata(fileName) : {};
+  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-  const asset: NovaAsset = {
-    id: assetId,
-    name: fileName,
-    type: isFont ? "font" : "image",
-    format: fileType.split("/")[1] ?? "bin",
-    size: fileSize,
-    url: assetPublicUrl(entry.key),
-    key: entry.key,
-    createdAt: new Date().toISOString(),
-    ...fontMeta,
-  };
+  let asset: NovaAsset;
+
+  if (isImageKitConfigured()) {
+    // ── ImageKit upload ────────────────────────────────────────────────────
+    let folderName: string | undefined;
+    if (folderId) {
+      try {
+        const folder = await getFolder(folderId);
+        folderName = folder?.name;
+      } catch { /* upload to root on error */ }
+    }
+
+    const ikFolder = projectFolder(projectId, folderName);
+
+    let ikResult;
+    try {
+      ikResult = await uploadToImageKit(data, safeName, ikFolder);
+    } catch (err) {
+      console.error("[api/assets/upload] ImageKit upload failed:", err);
+      return NextResponse.json({ error: "ImageKit upload failed" }, { status: 500 });
+    }
+
+    asset = {
+      id: assetId,
+      name: fileName,
+      type: isFont ? "font" : "image",
+      format: fileType.split("/")[1] ?? "bin",
+      size: fileSize,
+      url: ikResult.url,
+      key: ikResult.fileId,
+      imagekitFileId: ikResult.fileId,
+      createdAt: new Date().toISOString(),
+      folderId,
+      width: ikResult.width,
+      height: ikResult.height,
+      ...fontMeta,
+    };
+  } else {
+    // ── R2 fallback (original behavior) ────────────────────────────────────
+    try {
+      await uploadToR2(entry.key, data, fileType);
+    } catch (err) {
+      console.error("[api/assets/upload] R2 upload failed:", err);
+      return NextResponse.json({ error: "R2 upload failed" }, { status: 500 });
+    }
+
+    asset = {
+      id: assetId,
+      name: fileName,
+      type: isFont ? "font" : "image",
+      format: fileType.split("/")[1] ?? "bin",
+      size: fileSize,
+      url: assetPublicUrl(entry.key),
+      key: entry.key,
+      createdAt: new Date().toISOString(),
+      folderId,
+      ...fontMeta,
+    };
+  }
 
   return NextResponse.json({ asset }, { status: 201 });
 }

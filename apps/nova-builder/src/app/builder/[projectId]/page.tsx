@@ -18,6 +18,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { useParams } from "next/navigation";
 import { nanoid } from "nanoid";
+import { getRegistry } from "@/builder/left-sidebar/components/ComponentRegistry";
 import { useSession } from "next-auth/react";
 import {
   $instances,
@@ -415,6 +416,142 @@ export default function BuilderPage() {
           }
         });
         setTextEditingInstanceId(null);
+        return;
+      }
+      // ── Asset image drag-and-drop commit (from canvas drop handler) ────────────
+      // Canvas sends this after a native HTML5 drop of a "nova/asset-image" payload.
+      // Two actions:
+      //   "updateSrc" — dropped onto existing Image; just set the src prop.
+      //   "insertImage" — dropped on container/empty; create new Image instance + props.
+      if (e.data?.type === "nova:assetImageCommit") {
+        const msg = e.data as {
+          action: "updateSrc" | "insertImage";
+          instanceId?: string;          // for updateSrc
+          targetInstanceId?: string;    // for insertImage (parent or sibling)
+          position?: "into" | "above" | "below"; // for insertImage
+          assetId: string;
+          url: string;
+          name: string;
+        };
+
+        if (msg.action === "updateSrc" && msg.instanceId) {
+          // Atomically update src prop of the existing Image instance.
+          updateData(({ props }) => {
+            const srcPropId = `${msg.instanceId}:src`;
+            props.set(srcPropId, {
+              id: srcPropId,
+              instanceId: msg.instanceId!,
+              name: "src",
+              type: "string" as const,
+              value: msg.url,
+            } as Parameters<typeof props.set>[1]);
+          });
+          $selectedInstanceSelector.set([msg.instanceId]);
+        } else if (msg.action === "insertImage") {
+          const instances = $instances.get();
+          const pages = $pages.get();
+          if (!pages) return;
+          const activePage = pages.pages?.get(pages.homePageId);
+          if (!activePage) return;
+
+          // Resolve parent + insertIdx from targetInstanceId + position.
+          let parentId: string | null = msg.targetInstanceId ?? null;
+          let insertIdx: number | null = null;
+
+          if (msg.targetInstanceId && msg.position && msg.position !== "into") {
+            // "above" or "below": targetInstanceId is the sibling
+            for (const [id, inst] of instances.entries()) {
+              const childIdx = inst.children.findIndex(
+                (c) => c.type === "id" && c.value === msg.targetInstanceId
+              );
+              if (childIdx !== -1) {
+                parentId = id;
+                insertIdx = msg.position === "above" ? childIdx : childIdx + 1;
+                break;
+              }
+            }
+          }
+
+          if (!parentId) parentId = activePage.rootInstanceId;
+          if (parentId && insertIdx === null) {
+            insertIdx = instances.get(parentId)?.children.length ?? 0;
+          }
+
+          const newId = nanoid();
+          // Use the same registry-based creation used by the component panel.
+          const regEntry = getRegistry().find((r) => r.id === "Image");
+          const creationResult = regEntry
+            ? regEntry.createInstance(newId)
+            : {
+                instance: {
+                  type: "instance" as const,
+                  id: newId,
+                  component: "Image",
+                  label: "Image",
+                  children: [],
+                },
+              };
+
+          updateData(({ instances: draft, props }) => {
+            // 1. Register new instance
+            draft.set(newId, creationResult.instance as Parameters<typeof draft.set>[1]);
+
+            // 2. Register any child instances (unlikely for Image but defensive)
+            creationResult.childInstances?.forEach((child) => {
+              draft.set(child.id, child as Parameters<typeof draft.set>[1]);
+            });
+
+            // 3. Write default props from registry (width, height, alt etc.)
+            if (creationResult.props) {
+              Object.entries(creationResult.props).forEach(([propId, propVal]) => {
+                props.set(propId, propVal as Parameters<typeof props.set>[1]);
+              });
+            }
+
+            // 4. Override src with the actual asset URL (and record assetId)
+            const srcPropId = `${newId}:src`;
+            props.set(srcPropId, {
+              id: srcPropId,
+              instanceId: newId,
+              name: "src",
+              type: "string" as const,
+              value: msg.url,
+            } as Parameters<typeof props.set>[1]);
+
+            // 5. Set alt to asset name if not already set
+            const altPropId = `${newId}:alt`;
+            if (!props.has(altPropId)) {
+              props.set(altPropId, {
+                id: altPropId,
+                instanceId: newId,
+                name: "alt",
+                type: "string" as const,
+                value: msg.name,
+              } as Parameters<typeof props.set>[1]);
+            }
+
+            // 6. Link asset by storing assetId as a separate prop (mirrors $webstudio$canvasOnly$assetId)
+            const assetPropId = `${newId}:$webstudio$canvasOnly$assetId`;
+            props.set(assetPropId, {
+              id: assetPropId,
+              instanceId: newId,
+              name: "$webstudio$canvasOnly$assetId",
+              type: "string" as const,
+              value: msg.assetId,
+            } as Parameters<typeof props.set>[1]);
+
+            // 7. Attach new instance to parent at the resolved index
+            const parent = draft.get(parentId!);
+            if (parent) {
+              const newChildren = [...parent.children];
+              newChildren.splice(insertIdx!, 0, { type: "id" as const, value: newId });
+              draft.set(parentId!, { ...parent, children: newChildren } as Parameters<typeof draft.set>[1]);
+            }
+          });
+
+          // Auto-select the new instance
+          $selectedInstanceSelector.set([newId]);
+        }
         return;
       }
     };

@@ -36,6 +36,7 @@
     "clsx": "^2.1.1",
     "context.dev": "^2.5.0",
     "framer-motion": "^12.42.2",
+    "imagekit": "^6.0.0",
     "immer": "^10.1.1",
     "immerhin": "^0.10.0",
     "lexical": "^0.19.0",

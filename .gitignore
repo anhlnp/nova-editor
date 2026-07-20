@@ -47,3 +47,5 @@ reference/mitosis/
 # reference/webstudio-community/
 reference/
 friction-log.md
+
+apps/nova-builder/scripts/check-supabase.js

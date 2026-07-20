@@ -7,7 +7,7 @@ export type NovaAsset = {
   format: string;
   size: number;
   url: string;
-  key: string;
+  key: string;           // R2 key OR ImageKit fileId (stored for deletion)
   createdAt: string;
   // image dimensions
   width?: number;
@@ -16,6 +16,10 @@ export type NovaAsset = {
   fontFamily?: string;
   fontWeight?: number;
   fontStyle?: "normal" | "italic" | "oblique";
+  // folder system (optional — assets without folderId appear at root)
+  folderId?: string | null;
+  // ImageKit-specific: kept so DELETE route can call deleteFromImageKit(imagekitFileId)
+  imagekitFileId?: string;
 };
 
 function getR2Client(): S3Client {

@@ -322,6 +322,11 @@ function renderInstance(
     attrs.push(`alt="${esc(String(ip["alt"] ?? ""))}"`);
     if (ip["width"]) attrs.push(`width="${ip["width"]}"`);
     if (ip["height"]) attrs.push(`height="${ip["height"]}"`);
+    const imgStyles: string[] = [];
+    if (ip["width"]) imgStyles.push(`width:${ip["width"]}px`);
+    if (ip["height"]) imgStyles.push(`height:${ip["height"]}px`);
+    if (ip["objectfit"]) imgStyles.push(`object-fit:${ip["objectfit"]}`);
+    if (imgStyles.length) attrs.push(`style="${esc(imgStyles.join(";"))}"`);
     return `${pad}<img ${attrs.join(" ")}>\n`;
   }
   if (tag === "input") {

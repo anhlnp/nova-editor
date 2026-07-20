@@ -19,6 +19,110 @@ type MetaPropDef = {
   options?: Array<{ label: string; name: string }>;
   description?: string;
 };
+
+// ── Image Source Control ─────────────────────────────────────────────────────
+// Dedicated UI for setting an Image component's src — URL paste + library button.
+function ImageSrcControl({
+  instanceId,
+  current,
+  inputStyle,
+}: {
+  instanceId: string;
+  current: AnyProp | undefined;
+  inputStyle: React.CSSProperties;
+}) {
+  const src = typeof current?.value === "string" ? current.value : "";
+  const [localUrl, setLocalUrl] = useState(src);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Keep local state in sync when the prop changes externally
+  useEffect(() => {
+    if (!isFocused) setLocalUrl(typeof current?.value === "string" ? current.value : "");
+  }, [current?.value, isFocused]);
+
+  function commit(value: string) {
+    writeProp(instanceId, "src", value, "string");
+  }
+
+  const isValidPreview =
+    src.startsWith("http") || src.startsWith("/") || src.startsWith("data:");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Thumbnail preview */}
+      {isValidPreview && (
+        <div
+          style={{
+            width: "100%", height: 80, borderRadius: 4, overflow: "hidden",
+            border: `1px solid ${C.inputBorder}`, background: "#111",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt="preview"
+            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      )}
+
+      {/* URL input */}
+      <input
+        type="url"
+        value={localUrl}
+        placeholder="https://example.com/image.png"
+        style={inputStyle}
+        onFocus={() => setIsFocused(true)}
+        onChange={(e) => setLocalUrl(e.target.value)}
+        onBlur={(e) => { setIsFocused(false); commit(e.target.value); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            commit(localUrl);
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+      />
+
+      {/* Library button — stub for future Asset Manager */}
+      <button
+        onClick={() => {
+          // TODO: open Asset Manager modal (Phase 2)
+          // $assetManagerOpen.set(true);
+          alert("Asset Manager coming soon! Paste a URL above for now.");
+        }}
+        style={{
+          padding: "5px 10px",
+          background: "none",
+          border: `1px solid ${C.inputBorder}`,
+          borderRadius: 4,
+          color: C.textMuted,
+          fontSize: 12,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          width: "100%",
+          justifyContent: "center",
+          transition: "border-color 0.15s, color 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = C.accentLight;
+          (e.currentTarget as HTMLButtonElement).style.color = C.accentLight;
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = C.inputBorder;
+          (e.currentTarget as HTMLButtonElement).style.color = C.textMuted;
+        }}
+      >
+        <span>📁</span>
+        <span>Chọn từ thư viện</span>
+      </button>
+    </div>
+  );
+}
+
 function PropControl({
   instanceId, name, meta, current,
 }: {
@@ -82,6 +186,11 @@ function PropControl({
         <option value="false">false</option>
       </select>
     );
+  }
+
+  // Image src: dedicated control with URL paste + library button
+  if (meta.control === "file" && name === "src") {
+    return <ImageSrcControl instanceId={instanceId} current={current} inputStyle={inputStyle} />;
   }
 
   if (meta.control === "url" || name === "href" || name === "src" || name === "action") {

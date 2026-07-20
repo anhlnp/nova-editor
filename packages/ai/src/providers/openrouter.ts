@@ -5,11 +5,12 @@
 import OpenAI from "openai";
 import type { AIProvider, AIMessage, CompleteOptions } from "./base.js";
 
-// Model IDs on OpenRouter. ":free" suffix = no cost, may have queue delays.
-// Gemma 3 27B is Google's best open model as of 2025; strong at structured JSON output.
+// openrouter/auto — smart router that picks from available free models automatically.
+// This avoids hard-coding slugs that go in/out of the free tier.
+// See: https://openrouter.ai/models?q=:free for manually-pinned alternatives.
 const MODELS = {
-  planner: "meta-llama/llama-3.1-8b-instruct:free",  // Fast, free Llama 3.1 8B
-  patcher: "google/gemma-3-27b-it:free",              // Gemma 3 27B — best free patcher option
+  planner: "openrouter/auto",  // Auto-route to best available free model
+  patcher: "openrouter/auto",  // Auto-route to best available free model
 } as const;
 
 export class OpenRouterProvider implements AIProvider {
