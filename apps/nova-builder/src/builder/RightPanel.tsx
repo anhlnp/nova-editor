@@ -30,15 +30,15 @@ export function RightPanel() {
 
   // 3-column grid keeps all 9 labels readable at 280 px (WS-PARITY-AUDIT §8b V-1)
   const TAB_LABELS: { id: Tab; label: string }[] = [
-    { id: "style",    label: t.builder.style },
-    { id: "props",    label: t.builder.props },
+    { id: "style", label: t.builder.style },
+    { id: "props", label: t.builder.props },
     { id: "settings", label: t.builder.settings },
-    { id: "tokens",   label: t.builder.tokens },
-    { id: "interact", label: t.builder.interact },
-    { id: "data",     label: t.builder.data },
-    { id: "cms",      label: t.builder.cms },
-    { id: "seo",      label: t.builder.seo },
-    { id: "cookie",   label: t.builder.cookie },
+    // { id: "tokens",   label: t.builder.tokens },
+    // { id: "interact", label: t.builder.interact },
+    // { id: "data",     label: t.builder.data },
+    // { id: "cms",      label: t.builder.cms },
+    // { id: "seo",      label: t.builder.seo },
+    // { id: "cookie",   label: t.builder.cookie },
     ...(cssPreviewOpen ? [{ id: "css-preview" as Tab, label: t.builder.cssPreview }] : []),
   ];
 

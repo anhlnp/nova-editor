@@ -89,16 +89,16 @@ export function LeftSidebar() {
   const startWidth = useRef(0);
 
   const tabs: TabItem[] = [
-    { id: "components", label: t.builder.components, short: "Add",    icon: "⊞" },
-    { id: "symbols",    label: t.builder.symbols,    short: "Sym",    icon: "◆" },
-    { id: "pages",      label: t.builder.pages,      short: "Pages",  icon: "☰" },
-    { id: "navigator",  label: t.builder.navigator,  short: "Layers", icon: "◫" },
-    { id: "assets",     label: t.builder.assets,     short: "Assets", icon: "⊡" },
-    { id: "styles",     label: t.builder.cssVars,    short: "Tokens", icon: "§" },
-    { id: "css",        label: t.builder.customCss,  short: "CSS",    icon: "♯" },
-    { id: "marketplace", label: t.builder.templates, short: "Tmpl",   icon: "◈" },
-    { id: "comments",   label: t.builder.comments,   short: "Chat",   icon: "💬" },
-    { id: "activity",   label: t.builder.activity,   short: "Log",    icon: "◎" },
+    { id: "components", label: t.builder.components, short: "Add", icon: "⊞" },
+    // { id: "symbols",    label: t.builder.symbols,    short: "Sym",    icon: "◆" },
+    // { id: "pages",      label: t.builder.pages,      short: "Pages",  icon: "☰" },
+    { id: "navigator", label: t.builder.navigator, short: "Layers", icon: "◫" },
+    { id: "assets", label: t.builder.assets, short: "Assets", icon: "⊡" },
+    { id: "styles", label: t.builder.cssVars, short: "Tokens", icon: "§" },
+    { id: "css", label: t.builder.customCss, short: "CSS", icon: "♯" },
+    { id: "marketplace", label: t.builder.templates, short: "Tmpl", icon: "◈" },
+    // { id: "comments",   label: t.builder.comments,   short: "Chat",   icon: "💬" },
+    // { id: "activity",   label: t.builder.activity,   short: "Log",    icon: "◎" },
   ];
 
   useEffect(() => {
@@ -186,16 +186,16 @@ export function LeftSidebar() {
             flexShrink: 0,
           }}
         >
-          {activeTab === "navigator"  && <Navigator />}
-          {activeTab === "pages"      && <PagesPanel />}
+          {activeTab === "navigator" && <Navigator />}
+          {activeTab === "pages" && <PagesPanel />}
           {activeTab === "components" && <ComponentsPanel />}
-          {activeTab === "symbols"    && <SymbolsPanel />}
-          {activeTab === "assets"     && <AssetsPanel />}
-          {activeTab === "styles"     && <StylesPanel />}
-          {activeTab === "css"         && <CustomCSSPanel />}
+          {activeTab === "symbols" && <SymbolsPanel />}
+          {activeTab === "assets" && <AssetsPanel />}
+          {activeTab === "styles" && <StylesPanel />}
+          {activeTab === "css" && <CustomCSSPanel />}
           {activeTab === "marketplace" && <MarketplacePanel />}
-          {activeTab === "comments"   && meta && <CommentsPanel projectId={meta.id} />}
-          {activeTab === "activity"   && meta && <ActivityPanel projectId={meta.id} />}
+          {activeTab === "comments" && meta && <CommentsPanel projectId={meta.id} />}
+          {activeTab === "activity" && meta && <ActivityPanel projectId={meta.id} />}
         </div>
       )}
 

@@ -47,6 +47,7 @@ import { useI18n } from "@/lib/i18n";
 import { $saveStatus } from "@/lib/saveQueue";
 import type { I18nBuilderDictionary } from "@/lib/i18n/types";
 import { $symbols } from "@/lib/symbols";
+import { useSession } from "next-auth/react";
 
 // Sync-status chip (M2): reflects the patch-autosave queue. Conflict offers a
 // reload — the only safe recovery when another tab/session saved first.
@@ -126,6 +127,9 @@ export function TopbarActions({ isDemo }: Props) {
   const canvasZoom = useStore($canvasZoom);
   const gridGuides = useStore($gridGuidesVisible);
   const cssPreview = useStore($cssPreviewOpen);
+
+  const { status: authStatus } = useSession();
+  const isLoggedIn = authStatus === "authenticated";
 
   const isDirty = useStore($isDirty);
   const saveTriggerCount = useStore($saveTriggerCount);
@@ -383,8 +387,10 @@ export function TopbarActions({ isDemo }: Props) {
 
         {isDemo ? (
           <>
-            <span style={{ fontSize: 13, color: C.textMuted, fontFamily: C.font, padding: "0 4px" }}>{t.builder.demoNotice}</span>
-            <button onClick={() => router.push("/signup")} style={{ padding: "4px 14px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, rgba(124,58,237,0.9) 0%, rgba(79,70,229,0.85) 100%)", color: "#fff", fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}>{t.builder.signUpFree}</button>
+            {/* <span style={{ fontSize: 13, color: C.textMuted, fontFamily: C.font, padding: "0 4px" }}>{t.builder.demoNotice}</span> */}
+            {!isLoggedIn && (
+              <button onClick={() => router.push("/signup")} style={{ padding: "4px 14px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, rgba(124,58,237,0.9) 0%, rgba(79,70,229,0.85) 100%)", color: "#fff", fontSize: 12, fontFamily: C.font, cursor: "pointer", fontWeight: 700 }}>{t.builder.signUpFree}</button>
+            )}
             <button
               onClick={() => {
                 const data = {
