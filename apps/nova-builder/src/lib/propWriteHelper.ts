@@ -12,10 +12,15 @@ export type AnyProp = {
 export function writeProp(instanceId: string, name: string, value: unknown, type: string) {
   updateData(({ props: draft }) => {
     const allProps = draft as Map<string, AnyProp>;
-    const existingId = [...allProps.values()].find(
-      (p) => p.instanceId === instanceId && p.name === name
-    )?.id;
-    const id = existingId ?? `prop_${nanoid(8)}`;
+    // Collect ALL props matching this instanceId + name (there may be duplicates
+    // created by different code paths using different ID formats).
+    const matching: string[] = [];
+    for (const p of allProps.values()) {
+      if (p.instanceId === instanceId && p.name === name) matching.push(p.id);
+    }
+    // Keep the first existing ID; delete the rest to avoid stale duplicates.
+    const id = matching[0] ?? `prop_${nanoid(8)}`;
+    for (let i = 1; i < matching.length; i++) allProps.delete(matching[i]);
     allProps.set(id, { id, instanceId, name, type, value });
   });
 }

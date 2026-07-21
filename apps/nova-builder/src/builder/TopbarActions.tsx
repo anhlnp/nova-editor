@@ -484,8 +484,8 @@ export function TopbarActions({ isDemo }: Props) {
               onClose={() => setExportOpen(false)}
               items={[
                 { label: t.builder.exportHtml, title: "Download as standalone HTML", href: meta ? `/api/export/${meta.id}` : "#", download: true },
-                { label: t.builder.exportReact, title: "Download as React component", href: meta ? `/api/export/${meta.id}/react` : "#", download: true },
-                { label: t.builder.deploy, title: "Deploy to hosting", onClick: () => setDeployOpen((v) => !v) },
+                // { label: t.builder.exportReact, title: "Download as React component", href: meta ? `/api/export/${meta.id}/react` : "#", download: true },
+                // { label: t.builder.deploy, title: "Deploy to hosting", onClick: () => setDeployOpen((v) => !v) },
                 { label: t.builder.exportProject, title: "Export project template file", onClick: () => exportProject(meta ? meta.name : "untitled") },
                 { label: t.builder.importProject, title: "Import a .nova project file", onClick: () => { setExportOpen(false); handleImportClick(); } },
               ]}

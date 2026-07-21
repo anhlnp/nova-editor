@@ -409,7 +409,14 @@ export function AssetsPanel() {
   function handleInsert(asset: NovaAsset) {
     if (!selectedInstanceId) return;
     updateData(({ props }) => {
-      const propId = `${selectedInstanceId}:src`;
+      // Find all existing src props for this instance and consolidate to one ID
+      const matching: string[] = [];
+      for (const p of (props as Map<string, { instanceId: string; name: string }>).values()) {
+        if (p.instanceId === selectedInstanceId && p.name === "src") matching.push((p as any).id);
+      }
+      const propId = matching[0] ?? `${selectedInstanceId}:src`;
+      // Remove duplicates
+      for (let i = 1; i < matching.length; i++) props.delete(matching[i]);
       props.set(propId, { id: propId, instanceId: selectedInstanceId, name: "src", type: "string" as const, value: asset.url } as Parameters<typeof props.set>[1]);
     });
   }

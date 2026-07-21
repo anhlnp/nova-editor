@@ -437,7 +437,13 @@ export default function BuilderPage() {
         if (msg.action === "updateSrc" && msg.instanceId) {
           // Atomically update src prop of the existing Image instance.
           updateData(({ props }) => {
-            const srcPropId = `${msg.instanceId}:src`;
+            // Find existing src prop(s) and consolidate to avoid duplicates
+            const matching: string[] = [];
+            for (const p of (props as Map<string, { instanceId: string; name: string }>).values()) {
+              if (p.instanceId === msg.instanceId && p.name === "src") matching.push((p as any).id);
+            }
+            const srcPropId = matching[0] ?? `${msg.instanceId}:src`;
+            for (let i = 1; i < matching.length; i++) props.delete(matching[i]);
             props.set(srcPropId, {
               id: srcPropId,
               instanceId: msg.instanceId!,
@@ -509,7 +515,12 @@ export default function BuilderPage() {
             }
 
             // 4. Override src with the actual asset URL (and record assetId)
-            const srcPropId = `${newId}:src`;
+            // Find the src prop created by the registry to avoid creating a duplicate
+            let srcPropId: string | undefined;
+            for (const p of (props as Map<string, { instanceId: string; name: string }>).values()) {
+              if (p.instanceId === newId && p.name === "src") { srcPropId = (p as any).id; break; }
+            }
+            if (!srcPropId) srcPropId = `${newId}:src`;
             props.set(srcPropId, {
               id: srcPropId,
               instanceId: newId,
