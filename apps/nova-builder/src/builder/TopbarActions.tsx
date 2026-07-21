@@ -360,7 +360,7 @@ export function TopbarActions({ isDemo }: Props) {
         <LangToggle />
 
         {/* 1 — Mode pills: Design / Content */}
-        <div style={{ display: "flex", alignItems: "center", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 5, overflow: "hidden", flexShrink: 0 }}>
+        {/* <div style={{ display: "flex", alignItems: "center", background: C.inputBg, border: `1px solid ${C.border}`, borderRadius: 5, overflow: "hidden", flexShrink: 0 }}>
           {(["design", "content"] as const).map((m) => (
             <button
               key={m}
@@ -383,7 +383,7 @@ export function TopbarActions({ isDemo }: Props) {
               {m}
             </button>
           ))}
-        </div>
+        </div> */}
 
         {isDemo ? (
           <>
